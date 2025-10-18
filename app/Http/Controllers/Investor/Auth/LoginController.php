@@ -1,0 +1,64 @@
+<?php
+
+namespace App\Http\Controllers\Investor\Auth;
+
+use Auth;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Input;
+use Illuminate\Foundation\Auth\AuthenticatesUsers;
+
+
+class LoginController extends Controller
+{
+    /*
+    |--------------------------------------------------------------------------
+    | Login Controller
+    |--------------------------------------------------------------------------
+    |
+    | This controller handles authenticating users for the application and
+    | redirecting them to your home screen. The controller uses a trait
+    | to conveniently provide its functionality to your applications.
+    |
+    */
+
+    use AuthenticatesUsers {
+    	logout as performLogout;
+    }
+
+    /**
+     * Where to redirect users after login.
+     *
+     * @var string
+     */
+
+    protected $redirectTo = '/investor-panel';
+
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct(){
+        //$this->middleware('guest')->except('logout');
+    }
+
+    public function showLoginForm(){
+        return view('investor.auth.login');
+    }
+
+    public function logout(Request $request){
+
+        $this->performLogout($request);
+
+        $message = isset($request->access) ? 'Your access is restricted, please contact admin' : 'You are logged out';
+
+        return redirect()->route('investor.login')->with('message', $message);
+    }
+
+    //defining guard for admins
+    protected function guard(){
+        return Auth::guard('investor');
+    }
+    
+}

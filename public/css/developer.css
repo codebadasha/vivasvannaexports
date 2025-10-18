@@ -1,0 +1,40 @@
+.floatright:{float: right!important}
+.p-viewer, .p-viewer2{float: right;margin-top: -28px;margin-right: 10px;position: relative;z-index: 1;cursor:pointer;}
+.red{color: red}
+.mandatory{color:red}
+.error{color: red !important;}
+.headerFontColor{color: white !important;}
+.contactFontColor{color: white !important;}
+.loginFontColor{color: black !important;}
+.backGroundColor{background-color: white;}
+.addAddressStyle{margin-left: 820px !important; margin-bottom: -3px !important;}
+.discountImageStyle{height: 312px !important; width: 555px !important;}
+.text-align{text-align: right;}
+.float-right{float: right;}
+.width-30{width: 30px!important}
+.hide{display: none}
+.no-product-placeholder{margin:auto;margin-top:60px;font-size:26px}
+.product_thumb .pro_image {
+	height: auto !important;
+	width: 242px !important;
+	margin-left: auto;
+	margin-right: auto;
+	max-width: 100%;
+	display: block;
+}
+.product_thumb .pro_image > a:first-child {
+	display: block;
+}
+.product_thumb .pro_image .fav-link.img_wrp {
+	position: static;
+}
+.product_thumb .pro_image .fav-link.img_wrp .favimg.close {
+	top: 10px;
+	right: 10px;
+	z-index: 1;
+}
+.product_thumb .pro_image .fav-link.img_wrp .second-img {
+	display: none !important;
+}
+.pointer{cursor: pointer}
+.hide{display: none}
