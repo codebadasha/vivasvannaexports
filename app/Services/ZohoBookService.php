@@ -218,10 +218,7 @@ class ZohoBookService
      */
     public function getAllCustomer(array $params = []): array
     {
-        $params = [
-            "contact_type" => "customer",
-        ];
-
+       
         return $this->get("contacts", $params);
     }
 

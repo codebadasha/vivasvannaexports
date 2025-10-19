@@ -11,24 +11,32 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::dropIfExists('products');
+
         Schema::create('products', function (Blueprint $table) {
             $table->id();
-            $table->id();
-            $table->string('zoho_item_id')->unique();
-            $table->string('name');
-            $table->decimal('rate', 10, 2)->nullable();
+            $table->string('zoho_item_id',161)->unique(); // item_id
+            $table->string('name'); // item_name
+            $table->string('account_id')->nullable(); // Sales or Purchase Account ID
+            $table->string('account_name')->nullable();
+            $table->boolean('can_be_purchased')->default(false);
+            $table->boolean('can_be_sold')->default(true);
             $table->text('description')->nullable();
-            $table->string('tax_id')->nullable();
-            $table->string('sku')->nullable();
-            $table->string('product_type')->default("goods");
-            $table->string('status')->default("active");
-            $table->string('unit')->nullable();
-            $table->decimal('purchase_rate', 10, 2)->nullable();
+            $table->string('hsn_or_sac')->nullable();
+            $table->boolean('has_attachment')->default(false);
+            $table->string('image_document_id')->nullable();
+            $table->boolean('is_taxable')->default(true);
+            $table->string('item_type')->nullable(); // e.g., sales, purchase
+            $table->string('product_type')->default('goods');
             $table->string('purchase_account_id')->nullable();
-            $table->string('inventory_account_id')->nullable();
-            $table->decimal('initial_stock', 10, 2)->nullable();
-            $table->decimal('initial_stock_rate', 10, 2)->nullable();
-            $table->decimal('reorder_level', 10, 2)->nullable();
+            $table->decimal('rate', 10, 2)->nullable();
+            $table->string('sku')->nullable();
+            $table->string('source')->nullable(); // e.g., user
+            $table->string('status')->default('active');
+            $table->boolean('track_inventory')->default(false);
+            $table->string('unit')->nullable();
+            $table->timestamp('created_time')->nullable();
+            $table->timestamp('last_modified_time')->nullable();
             $table->tinyInteger('is_active')->default(1);
             $table->tinyInteger('is_delete')->default(0);
             $table->timestamps();

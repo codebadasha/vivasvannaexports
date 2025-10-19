@@ -11,8 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('product_taxes', function (Blueprint $table) {
+        Schema::create('tax_groups', function (Blueprint $table) {
             $table->id();
+            $table->string('tax_group_id', 121);
+            $table->foreign('tax_group_id')->references('tax_id')->on('taxes')->onDelete('cascade');
             $table->string('tax_id', 121)->unique();
             $table->string('tax_name', 121);
             $table->string('tax_name_formatted', 121)->nullable();
@@ -21,11 +23,10 @@ return new class extends Migration
             $table->string('tax_account_id', 121)->nullable();
             $table->string('output_tax_account_name', 121)->nullable();
             $table->string('tds_payable_account_id', 121)->nullable();
+            $table->string('tax_authority_id', 121)->nullable();
+            $table->string('tax_authority_name', 121)->nullable();
             $table->string('tax_specific_type', 121)->nullable();
             $table->boolean('is_state_cess')->default(false);
-            $table->boolean('is_inactive')->default(false);
-            $table->boolean('is_default_tax')->default(false);
-            $table->boolean('is_editable')->default(true);
             $table->string('tax_specification', 121)->nullable();
             $table->string('diff_rate_reason', 121)->nullable();
             $table->string('start_date', 121)->nullable();
@@ -43,6 +44,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('product_taxes');
+        Schema::dropIfExists('tax_groups');
     }
 };

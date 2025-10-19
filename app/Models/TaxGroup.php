@@ -5,9 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 
-class ProductTaxGroup extends Model
+class TaxGroup extends Model
 {
-    protected $table = 'product_tax_groups';
+    protected $table = 'tax_groups';
 
     protected $fillable = [
         'tax_group_id',

@@ -37,37 +37,6 @@ Route::get('vivasvanna-export', [CompanyRegisterController::class, 'welcome'])->
 Route::post('/webhooks/zoho/{module}', [ZohoWebhookController::class, 'handle']);
 
 
-Route::get('/test-taxes', function (ZohoBookService $zohoBook) {
-    try {
-        $params = request()->all(); // Get query params if any (e.g., ?page=1&per_page=10)
-        $invoices = $zohoBook->getAllTaxes($params);
-        return response()->json($invoices);
-    } catch (\Exception $e) {
-        Log::error('Invoice fetch error', ['message' => $e->getMessage(), 'params' => request()->all()]);
-        return response()->json(['error' => 'Failed to fetch invoices'], 500);
-    }
-});
-Route::get('/test-taxesbyid', function (ZohoBookService $zohoBook) {
-    try {
-        $params = request()->all(); // Get query params if any (e.g., ?page=1&per_page=10)
-        $invoices = $zohoBook->getTax('2279063000000035095');
-        return response()->json($invoices);
-    } catch (\Exception $e) {
-        Log::error('Invoice fetch error', ['message' => $e->getMessage(), 'params' => request()->all()]);
-        return response()->json(['error' => 'Failed to fetch invoices'], 500);
-    }
-});
-
-Route::get('/test-taxgroupbyid', function (ZohoBookService $zohoBook) {
-    try {
-        $params = request()->all(); // Get query params if any (e.g., ?page=1&per_page=10)
-        $invoices = $zohoBook->getTaxGroup('2279063000000123146');
-        return response()->json($invoices);
-    } catch (\Exception $e) {
-        Log::error('Invoice fetch error', ['message' => $e->getMessage(), 'params' => request()->all()]);
-        return response()->json(['error' => 'Failed to fetch invoices'], 500);
-    }
-});
 
 Route::get('/test-invoices', function (ZohoBookService $zohoBook) {
     try {
@@ -80,26 +49,7 @@ Route::get('/test-invoices', function (ZohoBookService $zohoBook) {
     }
 });
 
-Route::get('/test-item', function (ZohoBookService $zohoBook) {
-    try {
-        $item = $zohoBook->getAllItem();
-        
-        return response()->json($item);
-    } catch (\Exception $e) {
-        Log::error('Item fetch error', ['item_id' => 1, 'message' => $e->getMessage()]);
-        return response()->json(['error' => 'Failed to fetch item'], 500);
-    }
-});
-Route::get('/test-item/{itemId}', function (ZohoBookService $zohoBook, string $itemId) {
-    try {
-        $item = $zohoBook->getItem($itemId);
-        
-        return response()->json($item);
-    } catch (\Exception $e) {
-        Log::error('Item fetch error', ['item_id' => 1, 'message' => $e->getMessage()]);
-        return response()->json(['error' => 'Failed to fetch item'], 500);
-    }
-});
+
 Route::get('/customer', function (ZohoBookService $zohoBook) {
     try {
         $item = $zohoBook->getAllCustomer();

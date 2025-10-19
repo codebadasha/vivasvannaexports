@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\ProductTax;
+use App\Models\Tax;
 use App\Services\ZohoBookService;
 use Illuminate\Console\Command;
 
@@ -59,7 +59,7 @@ class ZohoSyncTaxes extends Command
                 $tax['is_state_cess'] = $taxDetails['is_state_cess'];
                 $tax['description'] = $taxDetails['description'];
 
-                ProductTax::upsertFromZoho($tax);
+                Tax::upsertFromZoho($tax);
                 $totalImported++;
             }
 
