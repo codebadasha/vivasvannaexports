@@ -184,18 +184,6 @@ class SurepassService
                 ), 400);
             }
 
-            // Step 3: Get GST by PAN
-            // $gstByPan = $this->surepass->getGstByPan($panNumber);
-            // if (!$gstByPan['status']) {
-            //     Log::error('GST by PAN retrieval failed', [
-            //         'pan' => $panNumber,
-            //         'error' => $gstByPan['message'] ?? 'Unknown error'
-            //     ]);
-            //     return response()->json(DefaultResponse::error(
-            //         $gstByPan['message'] ?? 'GST by PAN retrieval failed'
-            //     ), 400);
-            // }
-
             // // Step 4: Validate CIN
             $cinCheck = $this->cinVerification($business_name);
             $cinNumber = null;
@@ -205,16 +193,6 @@ class SurepassService
 
                 if (!empty($cinData['company_list'])) {
                     $cinNumber = $this->findCompany($cinData['company_list'], $business_name);
-                }
-            }
-
-            $msmeCheck = $this->msmeVerification($panNumber);
-            $msme_register = 0; // default = not MSME
-            if ($msmeCheck['status']) {
-                $msmeData = $msmeCheck['data'] ?? [];
-
-                if (!empty($msmeData['udyam_exists']) && $msmeData['udyam_exists'] === true) {
-                    $msme_register = 1;
                 }
             }
 
@@ -234,7 +212,7 @@ class SurepassService
                 'state_id' => $stateId,
                 'gstn' => $gstNumber,
                 'cin' => $cinNumber,
-                'msme_register' => $msme_register,
+                'msme_register' => 0,
             ];
 
             $promoters = !empty($gstData['promoters']) ? json_encode($gstData['promoters']) : null;

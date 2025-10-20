@@ -60,7 +60,7 @@ class CompanyRegisterController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(Request $request, SurepassService $surepass)
     {
         // dd($request->cin !== null ? 1 : 0);
         try {
@@ -104,9 +104,30 @@ class CompanyRegisterController extends Controller
                 return redirect()->route('invalid-link');
             }
 
+            $panNumber = strtoupper($request->pan_number);
+            // Step 3: Get GST by PAN
+            // $gstByPan = $this->surepass->getGstByPan($panNumber);
+            // if (!$gstByPan['status']) {
+            //     Log::error('GST by PAN retrieval failed', [
+            //         'pan' => $panNumber,
+            //         'error' => $gstByPan['message'] ?? 'Unknown error'
+            //     ]);
+            //     return response()->json(DefaultResponse::error(
+            //         $gstByPan['message'] ?? 'GST by PAN retrieval failed'
+            //     ), 400);
+            // }
+            $msmeCheck = $surepass->msmeVerification($panNumber);
+            $msme_register = 0; // default = not MSME
+            if ($msmeCheck['status']) {
+                $msmeData = $msmeCheck['data'] ?? [];
+
+                if (!empty($msmeData['udyam_exists']) && $msmeData['udyam_exists'] === true) {
+                    $msme_register = 1;
+                }
+            }
             
 
-            DB::transaction(function () use ($request, $invitation) {
+            DB::transaction(function () use ($request, $invitation, $panNumber, $msme_register) {
                 $uuid = (string) Str::uuid();
 
                 $gstNumber = strtoupper($request->gstn);
@@ -114,7 +135,7 @@ class CompanyRegisterController extends Controller
                 $companyData = [
                     'uuid' => $uuid,
                     'director_name' => $request->director_name,
-                    'pan_number' => strtoupper($request->pan_number),
+                    'pan_number' => $panNumber,
                     'company_name' => $request->company_name,
                     'mobile_number' => $request->mobile_number,
                     'email' => $request->email_id,
@@ -124,7 +145,7 @@ class CompanyRegisterController extends Controller
                     'gstn' => $gstNumber,
                     'cin' => $request->cin,
                     'cin_verify' => $request->cin !== null ? 1 : 0,
-                    'msme_register' => $request->msme_register,
+                    'msme_register' => $msme_register,
                     'turnover' => $request->turnover,
                     'is_verify' => 1,
                     'is_active' => 1,

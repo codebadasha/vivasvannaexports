@@ -16,6 +16,7 @@ class ClientCompany extends Authenticatable
 
     protected $fillable = [
         'uuid',
+        'zoho_contact_id',
         'company_name',
         'address',
         'state_id',

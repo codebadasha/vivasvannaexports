@@ -62,7 +62,7 @@ class ClientCompanyController extends GlobalController
         }
     }
 
-    public function store(Request $request)
+    public function store(Request $request, SurepassService $surepass)
     {
 
         try {
@@ -92,7 +92,29 @@ class ClientCompanyController extends GlobalController
                 'contact.required' => 'At least one contact person is required.',
             ]);
 
-            DB::transaction(function () use ($request) {
+            $panNumber = strtoupper($request->pan_number);
+            // Step 3: Get GST by PAN
+            // $gstByPan = $this->surepass->getGstByPan($panNumber);
+            // if (!$gstByPan['status']) {
+            //     Log::error('GST by PAN retrieval failed', [
+            //         'pan' => $panNumber,
+            //         'error' => $gstByPan['message'] ?? 'Unknown error'
+            //     ]);
+            //     return response()->json(DefaultResponse::error(
+            //         $gstByPan['message'] ?? 'GST by PAN retrieval failed'
+            //     ), 400);
+            // }
+            $msmeCheck = $surepass->msmeVerification($panNumber);
+            $msme_register = 0; // default = not MSME
+            if ($msmeCheck['status']) {
+                $msmeData = $msmeCheck['data'] ?? [];
+
+                if (!empty($msmeData['udyam_exists']) && $msmeData['udyam_exists'] === true) {
+                    $msme_register = 1;
+                }
+            }
+
+            DB::transaction(function () use ($request, $panNumber, $msme_register) {
                 $uuid = (string) Str::uuid();
 
                 $companyData = [
@@ -105,10 +127,10 @@ class ClientCompanyController extends GlobalController
                     'email' => $request->email,
                     'password' => bcrypt($request->gstn),
                     'gstn' => strtoupper($request->gstn),
-                    'pan_number' => strtoupper($request->pan_number),
+                    'pan_number' => $panNumber,
                     'cin' => $request->cin,
                     'cin_verify' => $request->cin !== null ? 1 : 0,
-                    'msme_register' => $request->msme_register,
+                    'msme_register' => $msme_register,
                     'turnover' => $request->turnover,
                     'is_auto_password' => 1,
                     'is_verify' => 1,
@@ -266,7 +288,7 @@ class ClientCompanyController extends GlobalController
         }
     }
 
-    private function updateAuthorizedPersons($authorized, $companyId)
+    public function updateAuthorizedPersons($authorized, $companyId)
     {
         ClientCompanyAuthorizedPerson::where('client_company_id', $companyId)->delete();
         foreach ($authorized as $person) {
