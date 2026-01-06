@@ -44,7 +44,7 @@
                                         <label>Client</label>
                                         <select class="form-control select2" name="client">
                                             <option value="">Select Client</option>
-                                            @forelse(\App\Models\ClientCompany::whereIn('id',$investorClient)->where('is_active',1)->where('is_delete',0)->get() as $sk => $sv)
+                                            @forelse(\App\Models\ClientCompany::where('is_active',1)->where('is_delete',0)->get() as $sk => $sv)
                                                 <option value="{{ $sv->id }}" {{ $sv->id == request()->client ? 'selected' : ''}}>{{ $sv->company_name }}</option>
                                             @empty
                                                 <option value="">No Data Found</option>

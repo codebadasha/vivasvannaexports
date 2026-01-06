@@ -10,7 +10,6 @@
 	
 
 
-
 	//forget and reset password
 	Route::get('password/reset', 'Auth\ForgotPasswordController@showLinkRequestForm')->name('client.auth.password.reset');
 	Route::post('password/email', 'Auth\ForgotPasswordController@sendResetLinkEmail')->name('client.passwordemail');
@@ -67,7 +66,12 @@
 		Route::get('/edit/{id}', 'PurchaseOrderController@edit')->name('client.po.edit');
 		Route::post('/update', 'PurchaseOrderController@update')->name('client.po.update');
 		Route::get('/delete/{id}', 'PurchaseOrderController@delete')->name('client.po.delete');
-		Route::get('/view-po-details/{id}', 'PurchaseOrderController@viewPurchaseOrder')->name('client.po.viewPurchaseOrder');
+		
+		Route::get('/view-po-details/{id}', 'PurchaseOrderController@view')->name('client.po.viewpo');
+		Route::get('/view-invoice/{id}', 'PurchaseOrderController@viewinvoice')->name('client.po.viewinvoice');
+		Route::get('/invoice-download/{id}', 'PurchaseOrderController@invoicedownload')->name('client.po.invoicedownload');
+		Route::get('/purchase-order-download/{id}', 'PurchaseOrderController@download')->name('client.po.download');
+		
 		Route::post('/product-list', 'PurchaseOrderController@getProductList')->name('client.po.getProductList');
 		
 		Route::get('/po-items/{id}', 'PurchaseOrderController@poItems')->name('client.po.poItems');

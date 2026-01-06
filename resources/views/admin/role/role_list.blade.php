@@ -16,13 +16,18 @@
                             <li class="breadcrumb-item active">All Roles</li>
                         </ol>
                     </div>
-                    
+
                 </div>
             </div>
         </div>
 
         <div class="row">
             <div class="col-12">
+                <div class="text-end mb-4">
+                    @if(array_key_exists('role',$selectedAction) && in_array('add',$selectedAction['role']))
+                    <a href="{{ route('admin.addRole') }}" class="btn btn-primary"><i class="fa fa-plus pe-1"></i>Add</a>
+                    @endif
+                </div>
                 <div class="card">
                     <div class="card-body">
 
@@ -36,28 +41,28 @@
                             </thead>
                             <tbody>
                                 @if(!is_null($roles))
-                                    @foreach($roles as $rk => $rv)
-                                        <tr>
-                                            <td>{{ $loop->iteration }}</td>
-                                            <td>{{ $rv->name }}</td>
-                                            <td>
-                                                @if($rk != 0)
-                                                    @if(array_key_exists('role',$selectedAction) && in_array('edit',$selectedAction['role']))
-                                                        <a class="btn btn-primary waves-effect waves-light" href="{{ route('admin.editRole',base64_encode($rv->id)) }}" role="button" title="Edit">Edit </a>
-                                                    @endif
-                                                    @if(array_key_exists('role',$selectedAction) && in_array('delete',$selectedAction['role']))
-                                                        <a class="btn btn-danger waves-effect waves-light" href="{{ route('admin.deleteRole',base64_encode($rv->id)) }}" role="button" onclick="return confirm('Do you want to delete this role?');" title="Delete">
-                                                            Delete
-                                                        </a>
-                                                    @endif
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    @endforeach
+                                @foreach($roles as $rk => $rv)
+                                <tr>
+                                    <td>{{ $loop->iteration }}</td>
+                                    <td>{{ $rv->name }}</td>
+                                    <td>
+                                        @if($rk != 0)
+                                        @if(array_key_exists('role',$selectedAction) && in_array('edit',$selectedAction['role']))
+                                        <a class="btn btn-primary waves-effect waves-light" href="{{ route('admin.editRole',base64_encode($rv->id)) }}" role="button" title="Edit">Edit </a>
+                                        @endif
+                                        @if(array_key_exists('role',$selectedAction) && in_array('delete',$selectedAction['role']))
+                                        <a class="btn btn-danger waves-effect waves-light" href="{{ route('admin.deleteRole',base64_encode($rv->id)) }}" role="button" onclick="return confirm('Do you want to delete this role?');" title="Delete">
+                                            Delete
+                                        </a>
+                                        @endif
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endforeach
                                 @endif
                             </tbody>
                         </table>
-                        
+
                     </div>
                 </div>
             </div>

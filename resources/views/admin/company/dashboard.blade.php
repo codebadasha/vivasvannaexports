@@ -15,7 +15,7 @@
                             <li class="breadcrumb-item active">Dashboard for</li>
                         </ol>
                     </div>
-                    
+
                 </div>
             </div>
         </div>
@@ -54,16 +54,16 @@
                             <div class="col-md-12">
                                 <table class="table" border="1">
                                     @if(!is_null($client->contact))
-                                        @foreach($client->contact as $ck => $cv)
-                                            <tr>
-                                                <td><b>Name</b></td>
-                                                <td>{{ $cv->name }}</td>
-                                                <td><b>Email</b></td>
-                                                <td>{{ $cv->email }}</td>
-                                                <td><b>Mobile</b></td>
-                                                <td>{{ $cv->mobile }}</td>
-                                            </tr>
-                                        @endforeach
+                                    @foreach($client->contact as $ck => $cv)
+                                    <tr>
+                                        <td><b>Name</b></td>
+                                        <td>{{ $cv->name }}</td>
+                                        <td><b>Email</b></td>
+                                        <td>{{ $cv->email }}</td>
+                                        <td><b>Mobile</b></td>
+                                        <td>{{ $cv->mobile }}</td>
+                                    </tr>
+                                    @endforeach
                                     @endif
                                 </table>
                             </div>
@@ -101,7 +101,7 @@
                             <div class="card-body">
                                 <div class="d-flex">
                                     <div class="flex-grow-1">Total PO Amount</p>
-                                        <h4 class="mb-0"><a href="{{ route('admin.po.index') }}?client={{ $client->id }}">{{ \App\Models\PurchaseOrder::where('client_id',$client->id)->where('is_active',1)->where('is_delete',0)->sum('subtotal') }}</a></h4>
+                                        <h4 class="mb-0"><a href="{{ route('admin.so.index') }}?client={{ $client->id }}">₹ {{ number_format(\App\Models\SalesOrder::where('customer_id', $client->zoho_contact_id)->sum('total'), 2, '.', ',') }}</a></h4>
                                     </div>
 
                                     <div class="flex-shrink-0 align-self-center ">
@@ -121,7 +121,9 @@
                                 <div class="d-flex">
                                     <div class="flex-grow-1">
                                         <p class="text-muted fw-medium">Total Invoice Raised</p>
-                                        <h4 class="mb-0"><a href="{{ route('admin.invoice.index') }}?client={{ $client->id }}">{{ \App\Models\PurchaseOrderInvoice::wherehas('po',function($q) use ($client) { $q->where('client_id',$client->id); })->where('is_active',1)->where('is_delete',0)->sum('invoice_amount') }}</a></h4>
+                                        <h4 class="mb-0"><a href="javascript:void(0);">
+                                                ₹ {{ number_format(\App\Models\SalesOrder::where('customer_id', $client->zoho_contact_id)->sum('total'), 2, '.', ',') }}
+                                            </a></h4>
                                     </div>
 
                                     <div class="flex-shrink-0 align-self-center">
@@ -141,7 +143,7 @@
                                 <div class="d-flex">
                                     <div class="flex-grow-1">
                                         <p class="text-muted fw-medium">Total Invoice Raised</p>
-                                        <h4 class="mb-0"><a href="{{ route('admin.invoice.index') }}?client={{ $client->id }}">{{ \App\Models\PurchaseOrderInvoice::where('mark_as_paid',1)->wherehas('po',function($q) use ($client) { $q->where('client_id',$client->id); })->where('is_active',1)->where('is_delete',0)->count() }}</a></h4>
+                                        <h4 class="mb-0"><a href="javascript:void(0);">₹ {{ number_format(\App\Models\SalesOrderInvoice::wherehas('salesOrder',function($q) use ($client) { $q->where('customer_id', $client->zoho_contact_id); })->sum('total'), 2, '.', ',') }}</a></h4>
                                     </div>
 
                                     <div class="flex-shrink-0 align-self-center">
@@ -161,7 +163,7 @@
                                 <div class="d-flex">
                                     <div class="flex-grow-1">
                                         <p class="text-muted fw-medium">Total Received Payment</p>
-                                        <h4 class="mb-0"><a href="{{ route('admin.invoice.index') }}?client={{ $client->id }}">{{ \App\Models\PurchaseOrderInvoice::where('mark_as_paid',1)->wherehas('po',function($q) use ($client) { $q->where('client_id',$client->id); })->where('is_active',1)->where('is_delete',0)->sum('invoice_amount') }}</a></h4>
+                                        <h4 class="mb-0"><a href="javascript:void(0);">{{ \App\Models\SalesOrderInvoice::where('status','paid')->wherehas('salesOrder',function($q) use ($client) { $q->where('customer_id',$client->zoho_contact_id); })->count() }}</a></h4>
                                     </div>
 
                                     <div class="flex-shrink-0 align-self-center">
@@ -181,7 +183,7 @@
                                 <div class="d-flex">
                                     <div class="flex-grow-1">
                                         <p class="text-muted fw-medium">Over Due Amount</p>
-                                        <h4 class="mb-0"><a href="{{ route('admin.invoice.index') }}?client={{ $client->id }}">{{ \App\Models\PurchaseOrderInvoice::whereDate('due_date','<',date('Y-m-d'))->where('mark_as_paid',0)->wherehas('po',function($q) use ($client) { $q->where('client_id',$client->id); })->where('is_active',1)->where('is_delete',0)->sum('invoice_amount') }}</a></h4>
+                                        <h4 class="mb-0"><a href="javascript:void(0);">₹ {{ number_format(\App\Models\SalesOrderInvoice::where('status','overdue')->wherehas('salesOrder',function($q) use ($client) { $q->where('customer_id',$client->zoho_contact_id); })->sum('total'), 2, '.', ',') }}</a></h4>
                                     </div>
 
                                     <div class="flex-shrink-0 align-self-center">
@@ -217,7 +219,6 @@
                 </div>
             </div>
         </div>
-
         <div class="row">
             <div class="col-12">
                 <div class="card">
@@ -236,26 +237,28 @@
                                 </tr>
                             </thead>
                             <tbody>
-                            @if(!is_null($detail))
+                                @if(!is_null($detail))
                                 @foreach($detail as $ok => $ov)
-                                    <tr>
-                                        <td>{{ $loop->iteration }}</td>
-                                        <td>{{ !is_null($ov->po) && !is_null($ov->po->project) ? $ov->po->project->name : '--' }}</td>
-                                        <td>{{ !is_null($ov->po) ? $ov->po->po_number : '--' }}</td>
-                                        <td>{{ !is_null($ov->varation) ? $ov->varation->product->product_type.' '.$ov->varation->grade : '--' }}</td>
-                                        <td>{{ $ov->remaining_boq_qty }}</td>
-                                        <td>{{ $ov->qty }}</td>
-                                        <td>Coming Soon</td>
-                                        <td>Coming Soon</td>
-                                    </tr>
+                                <tr>
+                                    <td>{{ $loop->iteration }}</td>
+                                    <td>{{ !is_null($ov->salesOrder) && !is_null($ov->salesOrder->client) ? $ov->salesOrder->client->company_name : '--' }}</td>
+                                    <td>{{ !is_null($ov->salesOrder) ? $ov->salesOrder->salesorder_number : '--' }}</td>
+                                    <td>{{ !is_null($ov->product) ? $ov->product->name : '---' }}</td>
+                                    <td>{{ $ov->remaining_boq_qty ? 'yes' : '---'}}</td>
+                                    <td>{{ intval($ov->quantity) }} {{$ov->unit}}</td>
+                                    <td>Coming Soon</td>
+                                    <td>Coming Soon</td>
+                                </tr>
                                 @endforeach
-                            @endif
+                                @endif
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div> <!-- end col -->
-        </div> <!-- end row -->
+        </div>
+
+        <!-- end row -->
     </div> <!-- container-fluid -->
 </div>
 @endsection

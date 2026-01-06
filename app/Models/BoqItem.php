@@ -9,10 +9,16 @@ class BoqItem extends Model
 {
     use HasFactory;
 
-    public function category(){
-        return $this->hasOne('App\Models\Product','id','category_id');
+    protected $fillable = [
+        'boq_id',
+        'product_id',
+        'qty',
+        'remaining_qty',
+        'unit',
+    ];
+
+    public function product(){
+        return $this->hasOne('App\Models\Product','zoho_item_id','product_id');
     }
-    public function grade(){
-        return $this->hasOne('App\Models\ProductVariation','id','variation_id');
-    }
+    
 }

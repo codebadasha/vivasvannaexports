@@ -9,7 +9,7 @@
 		@foreach($boq->item as $bk => $bv)
 			<tr>
 				<td>{{ $loop->iteration }}</td>
-				<td>{{ !is_null($bv->category) ? $bv->category->product_type : '--'}} - {{ !is_null($bv->grade) ? $bv->grade->grade : '--'}}</td>
+				<td>{{ !is_null($bv->product) ? $bv->product->name : '--'}}</td>
 				<td>{{ $bv->qty }} - {{ $bv->unit }}</td>
 				<td>Coming Soon</td>
 			</tr>

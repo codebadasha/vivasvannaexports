@@ -8,4 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class CompanyTeamMember extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'admin_id',
+        'client_company_id'
+    ];
 }

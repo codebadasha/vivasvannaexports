@@ -9,16 +9,16 @@
                     <h4 class="mb-0 font-size-18">ADD BOQ</h4>
                     <div class="page-title-right">
                         <ol class="breadcrumb m-0">
-                            <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">All BOQ</a></li>
+                            <li class="breadcrumb-item"><a href="{{ route('admin.boq.index') }}">All BOQ</a></li>
                             <li class="breadcrumb-item active">ADD BOQ</li>
                         </ol>
                     </div>
                 </div>
             </div>
-        </div>   
+        </div>
         <form class="custom-validation" action="{{ route('admin.boq.store') }}" method="post" id="boqForm" enctype="multipart/form-data">
-            @csrf  
-            <div class="row">   
+            @csrf
+            <div class="row">
                 <div class="col-lg-12">
                     <div class="card">
                         <div class="card-body">
@@ -27,16 +27,16 @@
                             </div><br />
 
                             <div class="row">
-                               
-                            
+
+
                                 <div class="col-md-4 mb-3">
                                     <label>Client <span class="mandatory">*</span></label>
                                     <select class="form-control select2" name="client_id" id="clientId" required>
                                         <option value="">Select Client</option>
                                         @forelse(\App\Models\ClientCompany::where('is_active',1)->where('is_delete',0)->get() as $sk => $sv)
-                                            <option value="{{ $sv->id }}">{{ $sv->company_name }}</option>
+                                        <option value="{{ $sv->id }}">{{ $sv->company_name }}</option>
                                         @empty
-                                            <option value="">No Data Found</option>
+                                        <option value="">No Data Found</option>
                                         @endforelse
                                     </select>
                                     <span id="client"></span>
@@ -47,9 +47,9 @@
                                     <select class="form-control select2" name="project_id" id="projectId" required>
                                         <option value="">Select Project</option>
                                         @forelse(\App\Models\Project::where('is_active',1)->where('is_delete',0)->get() as $sk => $sv)
-                                            <option value="{{ $sv->id }}">{{ $sv->name }}</option>
+                                        <option value="{{ $sv->id }}">{{ $sv->name }}</option>
                                         @empty
-                                            <option value="">No Data Found</option>
+                                        <option value="">No Data Found</option>
                                         @endforelse
                                     </select>
                                     <span id="project"></span>
@@ -70,31 +70,29 @@
                             <div class="card">
                                 <div class="card-body">
                                     <div class="row mb-3 item">
-                                        <div class="col-md-3 mb-3">
-                                            <label>Category <span class="mandatory">*</span></label>
-                                            <select class="form-control category" name="item[0][category_id]" data-key="0" data-msg="Please select category" required>
-                                                <option value="">Select Category</option>
+                                        <div class="col-md-4 mb-3">
+                                            <label>Product <span class="mandatory">*</span></label>
+                                            <select class="form-control product" name="item[0][product_id]" data-key="0" data-msg="Please select category" required>
+                                                <option value="">Select Product</option>
                                                 @forelse(\App\Models\Product::where('is_active',1)->where('is_delete',0)->get() as $pk => $pv)
-                                                    <option value="{{ $pv->id }}">{{ $pv->product_type }}</option>
+                                                <option value="{{ $pv->zoho_item_id }}">{{ $pv->name }}</option>
                                                 @empty
                                                 @endforelse
                                             </select>
                                         </div>
-                                        <div class="col-md-3">
+                                        <!-- <div class="col-md-3">
                                             <label>Variation <span class="mandatory">*</span></label>
                                             <select class="form-control variation variation0" name="item[0][variation]" data-msg="Please select variation" data-key="0" required>
                                                 <option value="">Select Variation</option>
                                             </select>
-                                        </div>
-                                        <div class="col-md-3">
+                                        </div> -->
+                                        <div class="col-md-4">
                                             <label>Qty <span class="mandatory">*</span></label>
                                             <input type="text" name="item[0][qty]" class="form-control qty qty0 width" data-msg="Please enter qty" placeholder="Qty" data-id="0" required>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-4">
                                             <label>Unit <span class="mandatory">*</span></label>
-                                            <select class="form-control unit0" name="item[0][unit]" data-msg="Please select unit" required>
-                                                <option value="">Select Unit</option>
-                                            </select>
+                                            <input type="text" name="item[0][unit]" class="form-control unit0 width" data-msg="Please enter unit" placeholder="unit" data-id="0" required readonly>
                                         </div>
                                     </div>
                                 </div>
@@ -130,47 +128,47 @@
 @endsection
 @section('js')
 <script>
-    $(document).on('change','.category',function(){
+    // $(document).on('change','.category',function(){
+    //     var element = $(this);
+    //     $.ajax({
+    //         url: "/admin/boq/get-product-variation",
+    //         type: "POST",
+    //         dataType: "JSON",
+    //         data:{ product_id : $(this).val()},
+    //         success: function(data){
+    //             $('.variation'+element.data('key')).empty().append('<option value="">Select Variation</option>');
+    //             $.each(data,function(key,value){
+    //                 $('.variation'+element.data('key')).append('<option value="'+value.id+'">'+value.grade+'</option>');
+    //             });
+    //         }
+    //     });
+    // })
+
+    $(document).on('change', '.product', function() {
         var element = $(this);
         $.ajax({
-            url: "/admin/boq/get-product-variation",
+            url: "{{ route('admin.boq.getUnit') }}",
             type: "POST",
             dataType: "JSON",
-            data:{ product_id : $(this).val()},
-            success: function(data){
-                $('.variation'+element.data('key')).empty().append('<option value="">Select Variation</option>');
-                $.each(data,function(key,value){
-                    $('.variation'+element.data('key')).append('<option value="'+value.id+'">'+value.grade+'</option>');
-                });
+            data: {
+                id: $(this).val()
+            },
+            success: function(data) {
+                $('.unit' + element.data('key')).val(data.unit || '');
             }
         });
     })
 
-    $(document).on('change','.variation',function(){
-        var element = $(this);
-        $.ajax({
-            url: "/admin/boq/get-unit",
-            type: "POST",
-            dataType: "JSON",
-            data:{ id : $(this).val()},
-            success: function(data){
-                var arr = data.unit.split(',');
-                $('.unit'+element.data('key')).empty().append('<option value="">Select Unit</option>');
-                $.each(arr,function(key,value){
-                    $('.unit'+element.data('key')).append('<option value="'+value+'">'+value+'</option>');
-                });
-            }
-        });
-    })
-
-    $(document).on('click','.addNewBoqItems',function(){
+    $(document).on('click', '.addNewBoqItems', function() {
         var id = $(this).data('id');
-        
+
         $.ajax({
-            url : '/admin/boq/get-new-item',
-            method:'post',
-            data:{ key : id},
-            success:function(data){
+            url: "{{ route('admin.boq.getNewItem') }}",
+            method: 'post',
+            data: {
+                key: id
+            },
+            success: function(data) {
                 $('.boqItems').append(data.html);
             }
         })
@@ -180,48 +178,53 @@
             this.value = match[1] + match[2];
         });
 
-        $('.addNewBoqItems').data('id',++id)
+        $('.addNewBoqItems').data('id', ++id)
     })
 
-    $(document).on('click','.removeItem',function(){
+    $(document).on('click', '.removeItem', function() {
         $(this).closest('.removeBoqItems').remove();
     })
 
-    $(document).on('change','#clientId, #projectId',function(){
+    $(document).on('change', '#clientId, #projectId', function() {
         $('#boqForm').valid();
     })
 
-    $(document).on('submit','#boqForm',function(e){
+    $(document).on('submit', '#boqForm', function(e) {
         e.preventDefault();
         $.ajax({
-            url: "/admin/boq/boq-name",
+            url: "{{ route('admin.boq.boqName') }}",
             type: "POST",
             dataType: "JSON",
-            data:{ project_id : $('#projectId').val(), client_id : $('#clientId').val(), name : $('#name').val()},
-            success: function(data){
-                if(data.status){
+            data: {
+                project_id: $('#projectId').val(),
+                client_id: $('#clientId').val(),
+                name: $('#name').val()
+            },
+            success: function(data) {
+                if (data.status) {
                     $('#boqForm')[0].submit();
                 } else {
                     toastr.error(data.message)
                 }
-            } 
+            }
         });
     })
 
-    $(document).on('change','#clientId',function(){
+    $(document).on('change', '#clientId', function() {
         $.ajax({
             url: "/admin/boq/get-client-project",
             type: "POST",
             dataType: "JSON",
-            data:{ client_id : $(this).val()},
-            success: function(data){
+            data: {
+                client_id: $(this).val()
+            },
+            success: function(data) {
                 $('#projectId').empty().append('<option value="">Select Project</option>');
-                $.each(data,function(key,value){
-                    $('#projectId').append('<option value="'+value.id+'">'+value.name+'</option>');
+                $.each(data, function(key, value) {
+                    $('#projectId').append('<option value="' + value.id + '">' + value.name + '</option>');
                 });
             }
-        });  
+        });
     })
 </script>
 @endsection
-                                

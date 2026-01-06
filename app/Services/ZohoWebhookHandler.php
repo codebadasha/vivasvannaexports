@@ -2,6 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\ClientCompany;
+use App\Models\Product;
+use App\Models\PurchaseOrder;
+use App\Models\SalesOrder;
+use App\Models\SalesOrderInvoice;
+use App\Models\SupplierCompany;
 use Illuminate\Support\Facades\Log;
 use App\Models\ZohoItem;
 use App\Models\ZohoInvoice;
@@ -31,13 +37,27 @@ class ZohoWebhookHandler
     private function deleteLocal(string $module, string $zohoId): string
     {
         switch ($module) {
-            case 'items': ZohoItem::where('zoho_id', $zohoId)->delete(); break;
-            case 'invoices': ZohoInvoice::where('zoho_id', $zohoId)->delete(); break;
-            case 'customers': ZohoCustomer::where('zoho_id', $zohoId)->delete(); break;
-            case 'vendors': ZohoVendor::where('zoho_id', $zohoId)->delete(); break;
-            case 'salesorders': ZohoSalesOrder::where('zoho_id', $zohoId)->delete(); break;
-            case 'purchaseorders': ZohoPurchaseOrder::where('zoho_id', $zohoId)->delete(); break;
-            default: Log::warning("Delete: Unknown module $module"); return "Unknown module";
+            case 'items':
+                Product::where('zoho_item_id', $zohoId)->delete();
+                break;
+            case 'invoices':
+                SalesOrderInvoice::where('invoice_id', $zohoId)->delete();
+                break;
+            case 'customers':
+                ClientCompany::where('zoho_id', $zohoId)->delete();
+                break;
+            case 'vendors':
+                SupplierCompany::where('company_name ', $zohoId)->delete();
+                break;
+            case 'salesorders':
+                SalesOrder::where('salesorder_id', $zohoId)->delete();
+                break;
+            case 'purchaseorders':
+                PurchaseOrder::where('purchaseorder_id', $zohoId)->delete();
+                break;
+            default:
+                Log::warning("Delete: Unknown module $module");
+                return "Unknown module";
         }
 
         return "Deleted locally ($module:$zohoId)";
@@ -48,32 +68,37 @@ class ZohoWebhookHandler
         switch ($module) {
             case 'items':
                 $data = $this->zoho->getItem($zohoId);
-                ZohoItem::upsertFromZoho($data);
+                $productDetails =  $data["item"];
+                Product::upsertFromZoho($productDetails);
                 break;
 
             case 'invoices':
-                $data = $this->zoho->getInvoice($zohoId);
-                ZohoInvoice::upsertFromZoho($data);
+                $data = $this->zoho->getInvoices($zohoId);
+                $invoiceDetails = $data['invoice'] ?? null;
+                SalesOrderInvoice::upsertFromZoho($invoiceDetails);
                 break;
 
-            case 'customers':
-                $data = $this->zoho->getCustomer($zohoId);
-                ZohoCustomer::upsertFromZoho($data);
-                break;
+            // case 'customers':
+            //     $data = $this->zoho->getCustomer($zohoId);
+            //     ClientCompany::upsertFromZoho($data);
+            //     break;
 
             case 'vendors':
                 $data = $this->zoho->getVendor($zohoId);
-                ZohoVendor::upsertFromZoho($data);
-                break;
+                $vendorDetails = $data['contact'] ?? null;
+                SupplierCompany::upsertFromZoho($vendorDetails);
+                break; //ohk
 
             case 'salesorders':
                 $data = $this->zoho->getSalesOrder($zohoId);
-                ZohoSalesOrder::upsertFromZoho($data);
+                $soDetails = $data['salesorder'] ?? [];
+                SalesOrder::upsertFromZoho($soDetails);
                 break;
 
             case 'purchaseorders':
                 $data = $this->zoho->getPurchaseOrder($zohoId);
-                ZohoPurchaseOrder::upsertFromZoho($data);
+                $poDetails = $data['purchaseorder'] ?? [];
+                PurchaseOrder::upsertFromZoho($poDetails);
                 break;
 
             default:

@@ -23,17 +23,17 @@
                     </a>
                 </li>
 
-                <li>
+                <!-- <li>
                     <a href="{{ route('investor.boq.index') }}" class="waves-effect">
                         <i class="bx bx-task"></i>
                         <span key="t-chat">All BOQs</span>
                     </a>
-                </li>
+                </li> -->
 
                 <li>
                     <a href="{{ route('investor.po.index') }}" class="waves-effect">
                         <i class="bx bx-list-check"></i>
-                        <span key="t-chat">All POs</span>
+                        <span key="t-chat">All Purchase Order</span>
                     </a>
                 </li>
 

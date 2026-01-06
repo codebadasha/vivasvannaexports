@@ -40,13 +40,17 @@
 
 
 	Route::group(['prefix' => 'po'], function () {
+		Route::get('/view-po-details/{id}', 'PurchaseOrderController@view')->name('investor.po.viewpo');
+		Route::get('/view-invoice/{id}', 'PurchaseOrderController@viewinvoice')->name('investor.po.viewinvoice');
+		Route::get('/invoice-download/{id}', 'PurchaseOrderController@invoicedownload')->name('investor.po.invoicedownload');
+		Route::get('/purchase-order-download/{id}', 'PurchaseOrderController@download')->name('investor.po.download');
 		Route::get('/list', 'PurchaseOrderController@index')->name('investor.po.index');
 		Route::get('/create', 'PurchaseOrderController@create')->name('investor.po.create');
 		Route::post('/store', 'PurchaseOrderController@store')->name('investor.po.store');
 		Route::get('/edit/{id}', 'PurchaseOrderController@edit')->name('investor.po.edit');
 		Route::post('/update', 'PurchaseOrderController@update')->name('investor.po.update');
 		Route::get('/delete/{id}', 'PurchaseOrderController@delete')->name('investor.po.delete');
-		Route::get('/view-po-details/{id}', 'PurchaseOrderController@viewPurchaseOrder')->name('investor.po.viewPurchaseOrder');
+		// Route::get('/view-po-details/{id}', 'PurchaseOrderController@viewPurchaseOrder')->name('investor.po.viewPurchaseOrder');
 		Route::post('/product-list', 'PurchaseOrderController@getProductList')->name('investor.po.getProductList');
 		
 		Route::get('/po-items/{id}', 'PurchaseOrderController@poItems')->name('investor.po.poItems');
@@ -56,6 +60,8 @@
 		Route::post('/get-project', 'PurchaseOrderController@getProject')->name('investor.po.getProject');
 		Route::post('/get-boq', 'PurchaseOrderController@getBoq')->name('investor.po.getBoq');
 		Route::post('/get-boq-item', 'PurchaseOrderController@getBoqItem')->name('investor.po.getBoqItem');
+
+		
 	});
 
 	Route::group(['prefix' => 'invoice'], function () {

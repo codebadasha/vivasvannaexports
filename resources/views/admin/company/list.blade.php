@@ -3,13 +3,13 @@
 @section('content')
 @php
 $turnover = [
-    "0" => "Below 50cr",
-    "1" => "50cr to 150cr",
-    "2" => "150cr to 250cr",
-    "3" => "250cr to 500cr",
-    "4" => "500cr to 1000cr",
-    "5" => "Above 1000cr",
-    ];
+"0" => "Below 50cr",
+"1" => "50cr to 150cr",
+"2" => "150cr to 250cr",
+"3" => "250cr to 500cr",
+"4" => "500cr to 1000cr",
+"5" => "Above 1000cr",
+];
 @endphp
 <div class="page-content">
     <div class="container-fluid">
@@ -33,6 +33,11 @@ $turnover = [
         <!-- end page title -->
         <div class="row">
             <div class="col-12">
+                <div class="text-end mb-4">
+                    @if(array_key_exists('client-company',$selectedAction) && in_array('add',$selectedAction['client-company']))
+                    <a href="{{ route('admin.client.create') }}" class="btn btn-primary"><i class="fa fa-plus pe-1"></i>Add</a>
+                    @endif
+                </div>
                 <div class="card">
                     <div class="card-body">
 
@@ -42,11 +47,10 @@ $turnover = [
                                     <th style="width: 35px;">Sr. No</th>
                                     <th>Company Name</th>
                                     <th>Director</th>
-                                    <th>GSTN</th>
-                                    <th>PAN Number</th>
-                                    <th>CIN Number</th>
+                                    <th>KYC Details</th>
                                     <th>MSME Register</th>
                                     <th>Turnover</th>
+                                    <th>Constitution fo Business</th>
                                     @if(array_key_exists('client-company',$selectedAction) && in_array('verify',$selectedAction['client-company']))
                                     <th>active</th>
                                     @endif
@@ -58,16 +62,19 @@ $turnover = [
                                 @if(!is_null($client))
                                 @foreach($client as $ok => $ov)
                                 <tr>
+
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $ov->company_name }}</td>
                                     <td>{{ $ov->director_name }}</td>
-                                    <td>{{ $ov->gstn }}</td>
-                                    <td>{{ $ov->pan_number }}</td>
-                                    <td id="cinTd_{{ $ov->id }}">
-                                        @if (empty($ov->cin))
-                                        <span class="badge bg-warning fs-5">CIN Pending</span>
-                                        @elseif($ov->cin && $ov->cin_verify == 0)
-                                        <span class="badge bg-danger fs-5">({{ $ov->cin }})</span><br>
+                                    <td id="cinTd_{{ $ov->id }}">GSTIN : {{ $ov->gstn   }}
+                                        <br>
+                                        PAN :{{ $ov->pan_number }}
+                                        <br>
+                                        CIN :
+                                        @if (empty($ov->cin) && $ov->cin == 0 && !in_array($ov->gstDetails->constitution_of_business, ['Proprietorship', 'Partnership']))
+                                        <span class="badge bg-warning p-2" style="font-size: 12px;">CIN Pending</span>
+                                        @elseif($ov->cin && $ov->cin_verify == 0 && !in_array($ov->gstDetails, ['Proprietorship', 'Partnership'] ))
+                                        <span class="badge bg-danger p-2" style="font-size: 12px;">({{ $ov->cin }})</span><br>
                                         <button class="btn btn-sm btn-outline-primary verifyCinBtn mt-1"
                                             data-id="{{ $ov->id }}" data-cin="{{ $ov->cin }}">
                                             Verify CIN
@@ -76,8 +83,9 @@ $turnover = [
                                         {{ $ov->cin }}
                                         @endif
                                     </td>
-                                    <td>{{ $turnover[$ov->turnover] }}</td>
                                     <td>{{ $ov->msme_register == '1' ? "Yes" : "NO"}}</td>
+                                    <td>{{ $turnover[$ov->turnover] }}</td>
+                                    <td>{{ $ov->gstDetails->constitution_of_business }}</td>
                                     @if(array_key_exists('client-company',$selectedAction) && in_array('verify',$selectedAction['client-company']))
                                     <td>
                                         <div class="form-check form-switch form-switch-md mb-3" dir="ltr">
@@ -93,10 +101,10 @@ $turnover = [
                                             Dashboard
                                         </a>
                                         @endif
-                                        @if(array_key_exists('client-company',$selectedAction) && in_array('download',$selectedAction['client-company']))
+                                        <!-- @if(array_key_exists('client-company',$selectedAction) && in_array('download',$selectedAction['client-company']))
                                         <a class="btn btn-secondary waves-effect waves-light" href="{{ route('admin.client.downloadCompanyDocumentZip',base64_encode($ov->id)) }}" role="button" title="Edit">
                                             Download
-                                        </a>
+                                        </a> -->
                                         @endif
                                         @if(array_key_exists('client-company',$selectedAction) && in_array('setting',$selectedAction['client-company']))
                                         <a class="btn btn-warning waves-effect waves-light overdueIntrestSetting" href="javascript:void(0);" role="button" title="Edit" data-id="{{ $ov->id }}">

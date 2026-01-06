@@ -19,7 +19,7 @@ class SupplierCompanyController extends GlobalController
 
     public function index(){
 
-        $supplier = SupplierCompany::where('is_delete',0)->get();
+        $supplier = SupplierCompany::with(['addresses' => function ($q) {$q->where('type', 'billing');}])->where('is_delete',0)->get();
 
         return view('admin.supplier.list',compact('supplier'));
     }
@@ -72,16 +72,16 @@ class SupplierCompanyController extends GlobalController
             }
         }
 
-        if(!is_null($request->product)){
-            foreach($request->product as $ak => $av){
-                $product = new SupplierProduct;
-                $product->supplier_company_id = $supplier->id;
-                $product->product_id = $av['product_id'];
-                $product->capacity = $av['capacity'];
-                $product->unit = $av['unit'];
-                $product->save();
-            }
-        }
+        // if(!is_null($request->product)){
+        //     foreach($request->product as $ak => $av){
+        //         $product = new SupplierProduct;
+        //         $product->supplier_company_id = $supplier->id;
+        //         $product->product_id = $av['product_id'];
+        //         $product->capacity = $av['capacity'];
+        //         $product->unit = $av['unit'];
+        //         $product->save();
+        //     }
+        // }
 
         $route = $request->btn_value == 'save_and_update' ? 'admin.supplier.create' : 'admin.supplier.index';
         

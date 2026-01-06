@@ -58,8 +58,7 @@ class TaxGroup extends Model
         }
 
         $data = [
-            'tax_group_id' => $taxGroupId,
-            'tax_id' => $taxId,
+            
             'tax_name' => $tax['tax_name'] ?? null,
             'tax_name_formatted' => $tax['tax_name_formatted'] ?? null,
             'tax_percentage' => isset($tax['tax_percentage']) ? (float)$tax['tax_percentage'] : null,

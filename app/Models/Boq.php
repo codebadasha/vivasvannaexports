@@ -9,6 +9,13 @@ class Boq extends Model
 {
     use HasFactory;
 
+     protected $fillable = [
+        'name',
+        'client_id',
+        'project_id',
+        'is_delete',
+    ];
+
     public function item(){
         return $this->hasMany('App\Models\BoqItem','boq_id','id');
     }

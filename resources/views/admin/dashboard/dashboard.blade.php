@@ -18,12 +18,7 @@
 
         @php $element = \App\Models\RoleElement::where('role_id',Auth::guard('admin')->user()->role_id)->pluck('element_id')->toArray(); @endphp
 
-        <div class="row mb-3">
-            <div class="col-xl-12">
-                <a href="{{ route('admin.po.addAllInvoice') }}" class="btn btn-primary float-right" ><i class="fa fa-plus"></i> Add Invoice</a>
-                <a href="{{ route('admin.po.create') }}" class="btn btn-danger float-right mr-2" style="margin-right:10px"><i class="fa fa-plus"></i> Add PO</a>
-            </div>
-        </div>
+
         <div class="row">
             <div class="col-xl-12">
                 <div class="row">
@@ -55,7 +50,7 @@
                                 <div class="card-body">
                                     <div class="d-flex">
                                         <div class="flex-grow-1">Total PO Amount</p>
-                                            <h4 class="mb-0">{{ \App\Models\PurchaseOrder::where('is_active',1)->where('is_delete',0)->sum('subtotal') }}</h4>
+                                            <h4 class="mb-0">₹ {{ number_format(\App\Models\SalesOrder::sum('total'), 2, '.', ',') }}</h4>
                                         </div>
 
                                         <div class="flex-shrink-0 align-self-center ">
@@ -77,7 +72,7 @@
                                     <div class="d-flex">
                                         <div class="flex-grow-1">
                                             <p class="text-muted fw-medium">Total Invoice Raised</p>
-                                            <h4 class="mb-0">{{ \App\Models\PurchaseOrderInvoice::where('is_active',1)->where('is_delete',0)->sum('invoice_amount') }}</h4>
+                                            <h4 class="mb-0">₹ {{ number_format(\App\Models\SalesOrderInvoice::sum('total'), 2, '.', ',') }}</h4>
                                         </div>
 
                                         <div class="flex-shrink-0 align-self-center">
@@ -99,7 +94,7 @@
                                     <div class="d-flex">
                                         <div class="flex-grow-1">
                                             <p class="text-muted fw-medium">Total Invoice Paid</p>
-                                            <h4 class="mb-0">{{ \App\Models\PurchaseOrderInvoice::where('mark_as_paid',1)->where('is_active',1)->where('is_delete',0)->count() }}</h4>
+                                            <h4 class="mb-0">{{ \App\Models\SalesOrderInvoice::where('status','paid')->count() }}</h4>
                                         </div>
 
                                         <div class="flex-shrink-0 align-self-center">
@@ -121,7 +116,7 @@
                                     <div class="d-flex">
                                         <div class="flex-grow-1">
                                             <p class="text-muted fw-medium">Total Received Payment</p>
-                                            <h4 class="mb-0">{{ \App\Models\PurchaseOrderInvoice::where('mark_as_paid',1)->where('is_active',1)->where('is_delete',0)->sum('invoice_amount') }}</h4>
+                                            <h4 class="mb-0">₹ {{ number_format(\App\Models\SalesOrderInvoice::where('status','paid')->sum('total'), 2, '.', ',') }}</h4>
                                         </div>
 
                                         <div class="flex-shrink-0 align-self-center">
@@ -143,7 +138,7 @@
                                     <div class="d-flex">
                                         <div class="flex-grow-1">
                                             <p class="text-muted fw-medium">Over Due Amount</p>
-                                            <h4 class="mb-0">{{ \App\Models\PurchaseOrderInvoice::whereDate('due_date','<',date('Y-m-d'))->where('mark_as_paid',0)->where('is_active',1)->where('is_delete',0)->sum('invoice_amount') }}</h4>
+                                            <h4 class="mb-0">₹ {{ number_format(\App\Models\SalesOrderInvoice::where('status','overdue')->sum('total'), 2, '.', ',') }}</h4>
                                         </div>
 
                                         <div class="flex-shrink-0 align-self-center">
@@ -180,7 +175,6 @@
                 </div>
             </div>
         </div>
-
         @if(in_array(7,$element))
             <div class="row">
                 <div class="col-12">
@@ -205,12 +199,12 @@
                                     @foreach($detail as $ok => $ov)
                                         <tr>
                                             <td>{{ $loop->iteration }}</td>
-                                            <td>{{ !is_null($ov->po) && !is_null($ov->po->project) ? $ov->po->project->name : '--' }}</td>
-                                            <td>{{ !is_null($ov->po) && !is_null($ov->po->client) ? $ov->po->client->company_name : '--' }}</td>
-                                            <td>{{ !is_null($ov->po) ? $ov->po->po_number : '--' }}</td>
-                                            <td>{{ !is_null($ov->varation) ? $ov->varation->product->product_type.' '.$ov->varation->grade : '--' }}</td>
-                                            <td>{{ $ov->remaining_boq_qty }}</td>
-                                            <td>{{ $ov->qty }}</td>
+                                            <td>{{ !is_null($ov->salesOrder) && !is_null($ov->salesOrder->project) ? $ov->salesOrder->project->name : '--' }}</td>
+                                            <td>{{ !is_null($ov->salesOrder) && !is_null($ov->salesOrder->client) ? $ov->salesOrder->client->company_name : '--' }}</td>
+                                            <td>{{ !is_null($ov->salesOrder) ? $ov->salesOrder->salesorder_number : '--' }}</td>
+                                            <td>{{ !is_null($ov->product) ? $ov->product->name : '---' }}</td>
+                                            <td>{{ $ov->remaining_boq_qty ? 'yes' : '---'}}</td>
+                                            <td>{{ intval($ov->quantity) }} {{$ov->unit}}</td>
                                             <td>Coming Soon</td>
                                             <td>Coming Soon</td>
                                         </tr>

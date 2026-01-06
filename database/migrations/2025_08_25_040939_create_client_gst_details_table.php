@@ -41,7 +41,6 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->foreign('client_company_id')->references('id')->on('client_companies')->onDelete('cascade');
         });
     }
 

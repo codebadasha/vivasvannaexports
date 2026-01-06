@@ -15,17 +15,20 @@
                             <li class="breadcrumb-item active">All BOQs</li>
                         </ol>
                     </div>
-                    
+
                 </div>
             </div>
         </div>
 
         <div class="row">
             <div class="col-12">
+                <div class="text-end mb-4">
+                    <a href="{{ route('client.boq.create') }}" class="btn btn-primary"><i class="fa fa-plus pe-1"></i>Add</a>
+                </div>
                 <div class="card">
                     <div class="card-body">
                         <form action="{{ route('client.boq.index') }}">
-                            <div class="row">  
+                            <div class="row">
                                 <div class="col-md-4">
                                     <label class="control-label">Project</label>
                                     <input class="form-control" name="project" value="{{ request()->project }}" placeholder="Project">
@@ -46,9 +49,9 @@
                                 <div class="col-md-2 mt-4">
                                     <button type="submit" class="btn btn-primary vendors save_button mt-1">Submit</button>
                                     @if($filter == 1)
-                                        <a href="{{ route('client.boq.index') }}" class="btn btn-danger mt-1 cancel_button" id="filter" name="save_and_list" value="save_and_list">
-                                            Reset
-                                        </a>
+                                    <a href="{{ route('client.boq.index') }}" class="btn btn-danger mt-1 cancel_button" id="filter" name="save_and_list" value="save_and_list">
+                                        Reset
+                                    </a>
                                     @endif
                                 </div>
                             </div>
@@ -75,27 +78,27 @@
                                 </tr>
                             </thead>
                             <tbody>
-                            @if(!is_null($getBoq))
+                                @if(!is_null($getBoq))
                                 @foreach($getBoq as $ok => $ov)
-                                    <tr>
-                                        <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $ov->name }}</td>
-                                        <td>{{ !is_null($ov->project) ? $ov->project->name : '--' }}</td>
-                                        <td>{{ date('d/m/Y h:i A',strtotime($ov->created_at)) }}</td>
-                                        <td>
-                                            <a class="btn btn-primary waves-effect waves-light viewBoq" href="javascript:void(0);" data-id="{{ $ov->id }}" role="button">
-                                                View BOQ
-                                            </a>
-                                            <a class="btn btn-primary waves-effect waves-light" href="{{ route('client.po.index') }}?boq_id={{ base64_encode($ov->id) }}" role="button" target="_blank">
-                                                Manage POs
-                                            </a>
-                                            <a class="btn btn-primary waves-effect waves-light" href="{{ route('client.boq.edit',base64_encode($ov->id)) }}" role="button">
-                                                Edit
-                                            </a>
-                                        </td>
-                                    </tr>
+                                <tr>
+                                    <td>{{ $loop->iteration }}</td>
+                                    <td>{{ $ov->name }}</td>
+                                    <td>{{ !is_null($ov->project) ? $ov->project->name : '--' }}</td>
+                                    <td>{{ date('d/m/Y h:i A',strtotime($ov->created_at)) }}</td>
+                                    <td>
+                                        <a class="btn btn-primary waves-effect waves-light viewBoq" href="javascript:void(0);" data-id="{{ $ov->id }}" role="button">
+                                            View BOQ
+                                        </a>
+                                        <!-- <a class="btn btn-primary waves-effect waves-light" href="{{ route('client.po.index') }}?boq_id={{ base64_encode($ov->id) }}" role="button" target="_blank">
+                                            Manage POs
+                                        </a> -->
+                                        <a class="btn btn-warning waves-effect waves-light" href="{{ route('client.boq.edit',base64_encode($ov->id)) }}" role="button">
+                                            Edit
+                                        </a>
+                                    </td>
+                                </tr>
                                 @endforeach
-                            @endif
+                                @endif
                             </tbody>
                         </table>
                     </div>
@@ -120,13 +123,15 @@
 @endsection
 @section('js')
 <script type="text/javascript">
-    $(document).on('click','.viewBoq',function(){
+    $(document).on('click', '.viewBoq', function() {
         $.ajax({
             url: "/client/boq/view-boq",
             type: "POST",
             dataType: "JSON",
-            data:{ boq_id : $(this).data('id')},
-            success: function(data){
+            data: {
+                boq_id: $(this).data('id')
+            },
+            success: function(data) {
                 $('#modalBody').html(data.html);
                 $('#myModal').modal('show');
             }

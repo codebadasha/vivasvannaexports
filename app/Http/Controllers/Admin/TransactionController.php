@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\PurchaseOrder;
 use App\Models\Transaction;
 use App\Models\PurchaseOrderInvoice;
+use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
@@ -46,12 +47,12 @@ class TransactionController extends Controller
 
         if(isset($request->payment_start_date) && $request->payment_start_date != ''){
             $filter = 1;
-            $query->whereBetween(\DB::raw('date(payment_date)'),[date('Y-m-d',strtotime(str_replace('/','-',trim($request->payment_start_date)))),date('Y-m-d',strtotime(str_replace('/','-',trim($request->payment_end_date))))]);
+            $query->whereBetween(DB::raw('date(payment_date)'),[date('Y-m-d',strtotime(str_replace('/','-',trim($request->payment_start_date)))),date('Y-m-d',strtotime(str_replace('/','-',trim($request->payment_end_date))))]);
         }
 
         if(isset($request->po_start_date) && $request->po_start_date != ''){
             $filter = 1;
-            $query->whereBetween(\DB::raw('date(created_at)'),[date('Y-m-d',strtotime(str_replace('/','-',trim($request->po_start_date)))),date('Y-m-d',strtotime(str_replace('/','-',trim($request->po_end_date))))]);
+            $query->whereBetween(DB::raw('date(created_at)'),[date('Y-m-d',strtotime(str_replace('/','-',trim($request->po_start_date)))),date('Y-m-d',strtotime(str_replace('/','-',trim($request->po_end_date))))]);
         }
 
         if(isset($request->fin_year) && $request->fin_year != ''){

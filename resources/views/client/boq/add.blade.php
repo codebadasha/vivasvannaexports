@@ -9,7 +9,7 @@
                     <h4 class="mb-0 font-size-18">ADD BOQ</h4>
                     <div class="page-title-right">
                         <ol class="breadcrumb m-0">
-                            <li class="breadcrumb-item"><a href="{{ route('client.dashboard') }}">All BOQ</a></li>
+                            <li class="breadcrumb-item"><a href="{{ route('client.boq.index') }}">All BOQs</a></li>
                             <li class="breadcrumb-item active">ADD BOQ</li>
                         </ol>
                     </div>
@@ -56,31 +56,29 @@
                             <div class="card">
                                 <div class="card-body">
                                     <div class="row mb-3 item">
-                                        <div class="col-md-3 mb-3">
-                                            <label>Category <span class="mandatory">*</span></label>
-                                            <select class="form-control category" name="item[0][category_id]" data-key="0" data-msg="Please select category" required>
-                                                <option value="">Select Category</option>
+                                        <div class="col-md-4 mb-3">
+                                            <label>Product <span class="mandatory">*</span></label>
+                                            <select class="form-control product" name="item[0][product_id]" data-key="0" data-msg="Please select Product" required>
+                                                <option value="">Select Product</option>
                                                 @forelse(\App\Models\Product::where('is_active',1)->where('is_delete',0)->get() as $pk => $pv)
-                                                    <option value="{{ $pv->id }}">{{ $pv->product_type }}</option>
+                                                    <option value="{{ $pv->zoho_item_id }}">{{ $pv->name }}</option>
                                                 @empty
                                                 @endforelse
                                             </select>
                                         </div>
-                                        <div class="col-md-3">
+                                        <!-- <div class="col-md-3">
                                             <label>Variation <span class="mandatory">*</span></label>
                                             <select class="form-control variation variation0" name="item[0][variation]" data-msg="Please select variation" data-key="0" required>
                                                 <option value="">Select Variation</option>
                                             </select>
-                                        </div>
-                                        <div class="col-md-3">
+                                        </div> -->
+                                        <div class="col-md-4">
                                             <label>Qty <span class="mandatory">*</span></label>
                                             <input type="text" name="item[0][qty]" class="form-control qty qty0 width" data-msg="Please enter qty" placeholder="Qty" data-id="0" required>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-4">
                                             <label>Unit <span class="mandatory">*</span></label>
-                                            <select class="form-control unit0" name="item[0][unit]" data-msg="Please select unit" required>
-                                                <option value="">Select Unit</option>
-                                            </select>
+                                            <input type="text" name="item[0][unit]" class="form-control unit0 width" data-msg="Please enter unit" placeholder="unit" data-id="0" required readonly>
                                         </div>
                                     </div>
                                 </div>
@@ -116,23 +114,7 @@
 @endsection
 @section('js')
 <script>
-    $(document).on('change','.category',function(){
-        var element = $(this);
-        $.ajax({
-            url: "/client/boq/get-product-variation",
-            type: "POST",
-            dataType: "JSON",
-            data:{ product_id : $(this).val()},
-            success: function(data){
-                $('.variation'+element.data('key')).empty().append('<option value="">Select Variation</option>');
-                $.each(data,function(key,value){
-                    $('.variation'+element.data('key')).append('<option value="'+value.id+'">'+value.grade+'</option>');
-                });
-            }
-        });
-    })
-
-    $(document).on('change','.variation',function(){
+    $(document).on('change','.product',function(){
         var element = $(this);
         $.ajax({
             url: "/client/boq/get-unit",
@@ -140,11 +122,7 @@
             dataType: "JSON",
             data:{ id : $(this).val()},
             success: function(data){
-                var arr = data.unit.split(',');
-                $('.unit'+element.data('key')).empty().append('<option value="">Select Unit</option>');
-                $.each(arr,function(key,value){
-                    $('.unit'+element.data('key')).append('<option value="'+value+'">'+value+'</option>');
-                });
+                $('.unit' + element.data('key')).val(data.unit || '');
             }
         });
     })

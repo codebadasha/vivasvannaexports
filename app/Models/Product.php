@@ -49,6 +49,17 @@ class Product extends Model
         return $this->hasMany(ProductTax::class, 'product_id');
     }
 
+    public function taxDetails()
+    {
+        return $this->hasManyThrough(
+            Tax::class,          // Final model you want
+            ProductTax::class,   // Intermediate table
+            'product_id',        // Foreign key on ProductTax for Product
+            'tax_id',            // Foreign key on Tax
+            'id',                // Local key on Product
+            'tax_id'             // Local key on ProductTax
+        );
+    }
     /**
      * Common method to map Zoho Item data and upsert in DB
      */

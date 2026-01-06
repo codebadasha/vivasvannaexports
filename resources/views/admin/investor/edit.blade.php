@@ -9,7 +9,7 @@
                     <h4 class="mb-0 font-size-18">Edit Investor</h4>
                     <div class="page-title-right">
                         <ol class="breadcrumb m-0">
-                            <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Investor List</a></li>
+                            <li class="breadcrumb-item"><a href="{{ route('admin.investor.index') }}">Investor List</a></li>
                             <li class="breadcrumb-item active">Edit Investor</li>
                         </ol>
                     </div>

@@ -19,6 +19,11 @@ class ZohoWebhookController extends Controller
         $this->module = $request->route('module'); // {module} from route
         $this->event = $request->query('event') ?? $request->input('event');
         $secret = $request->query('secret');
+        Log::warning('Zoho webhook secret', [
+            'module' => $this->module,
+            'event' => $this->event,
+            'secret' => $secret
+        ]);
 
         $this->config = ZohoWebhook::where('module_name', $this->module)
             ->where('event', $this->event)
@@ -37,11 +42,17 @@ class ZohoWebhookController extends Controller
 
     public function handle(Request $request, ZohoWebhookHandler $handler)
     {
+        
         $zohoId = $this->extractIdFromPayload($request->all());
         if (!$zohoId) {
             return response()->json(['message' => 'No record id found'], 422);
         }
         // By this point, validation is already done in __construct.
+        Log::info('webhook hit', [
+            'module' => $this->module,
+            'event' => $this->event,
+            'zohoId' => $zohoId,
+        ]);
         $result = $handler->process($this->module, $this->event, $zohoId);
 
         return response()->json(['message' => $result]);
@@ -59,6 +70,9 @@ class ZohoWebhookController extends Controller
             return $payload['data']['id'];
         }
 
+        Log::warning('Zoho webhook payload', [
+                'payload' => $payload
+            ]);
         return null;
     }
 }

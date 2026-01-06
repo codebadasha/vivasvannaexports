@@ -106,6 +106,7 @@ Route::group(['prefix' => 'team'], function () {
 
 
 Route::group(['prefix' => 'client-company'], function () {
+	Route::get('/get-client-projects/{clientId}', 'ClientCompanyController@getClientProjects')->name('admin.client.getClientProjects');
 	Route::get('/list', 'ClientCompanyController@index')->name('admin.client.index');
 	Route::get('/create', 'ClientCompanyController@create')->name('admin.client.create');
 	Route::get('/client-gstin-check', [ClientCompanyController::class, 'gstVerification'])->name('admin.client.gst.validate');
@@ -174,8 +175,37 @@ Route::group(['prefix' => 'po'], function () {
 	Route::post('/get-boq-item', 'PurchaseOrderController@getBoqItem')->name('admin.po.getBoqItem');
 
 	Route::post('/get-item-detail', 'PurchaseOrderController@getItemDetail')->name('admin.po.getItemDetail');
+
+	Route::get('/purchase-order-download/{id}', 'PurchaseOrderController@purchaseorderdownload')->name('admin.po.purchaseorderdownload');
 });
 
+Route::group(['prefix' => 'so'], function () {
+	Route::get('/list', 'SalesOrdersController@index')->name('admin.so.index');
+	
+	Route::post('/assign-project', 'SalesOrdersController@assignProject')->name('admin.so.assignProject');
+	Route::post('/assign-investor', 'SalesOrdersController@assignInvestor')->name('admin.so.assignInvestor');
+	Route::get('/view-so-details/{id}', 'SalesOrdersController@view')->name('admin.so.viewso');
+	Route::get('/view-invoice/{id}', 'SalesOrdersController@viewinvoice')->name('admin.so.viewinvoice');
+	Route::get('/invoice-download/{id}', 'SalesOrdersController@invoicedownload')->name('admin.so.invoicedownload');
+	Route::get('/sales-order-download/{id}', 'SalesOrdersController@salesorderdownload')->name('admin.so.salesorderdownload');
+	Route::get('/all', 'SalesOrdersController@allInvoice')->name('admin.so.allinvoice.index');
+	// Route::get('/create', 'PurchaseOrderController@create')->name('admin.po.create');
+	// Route::post('/store', 'PurchaseOrderController@store')->name('admin.po.store');
+	// Route::get('/edit/{id}', 'PurchaseOrderController@edit')->name('admin.po.edit');
+	// Route::post('/update', 'PurchaseOrderController@update')->name('admin.po.update');
+	// Route::get('/delete/{id}', 'PurchaseOrderController@delete')->name('admin.po.delete');
+	// Route::post('/product-list', 'PurchaseOrderController@getProductList')->name('admin.po.getProductList');
+
+	// Route::get('/po-items/{id}', 'PurchaseOrderController@poItems')->name('admin.po.poItems');
+	// Route::post('/post-supplier-item', 'PurchaseOrderController@postSupplierItem')->name('admin.po.postSupplierItem');
+	// Route::post('/supplier-list', 'PurchaseOrderController@supplierList')->name('admin.po.supplierList');
+
+	// Route::post('/get-project', 'PurchaseOrderController@getProject')->name('admin.po.getProject');
+	// Route::post('/get-boq', 'PurchaseOrderController@getBoq')->name('admin.po.getBoq');
+	// Route::post('/get-boq-item', 'PurchaseOrderController@getBoqItem')->name('admin.po.getBoqItem');
+
+	// Route::post('/get-item-detail', 'PurchaseOrderController@getItemDetail')->name('admin.po.getItemDetail');
+});
 
 Route::group(['prefix' => 'invoice'], function () {
 	Route::get('/all-invoice-add', 'PurchaseOrderController@addAllInvoice')->name('admin.po.addAllInvoice');
@@ -191,7 +221,7 @@ Route::group(['prefix' => 'invoice'], function () {
 	Route::post('/update', 'PurchaseOrderController@saveEditedInvoice')->name('admin.po.saveEditedInvoice');
 	Route::get('/delete/{id}', 'PurchaseOrderController@deleteInvoice')->name('admin.po.deleteInvoice');
 	Route::get('/download-invoice-document-zip/{id}', 'PurchaseOrderController@downloadInvoiceDocumentZip')->name('admin.po.downloadInvoiceDocumentZip');
-	Route::get('/all', 'PurchaseOrderController@allInvoice')->name('admin.invoice.index');
+	
 });
 
 Route::group(['prefix' => 'project'], function () {
@@ -214,7 +244,7 @@ Route::group(['prefix' => 'boq'], function () {
 	Route::post('/get-new-item', 'BoqController@getNewItem')->name('admin.boq.getNewItem');
 	Route::post('/get-product-variation', 'BoqController@getProductVariation')->name('admin.boq.getProductVariation');
 	Route::post('/get-unit', 'BoqController@getUnit')->name('admin.boq.getUnit');
-	Route::post('/view-boq', 'BoqController@viewBoq')->name('admin.boq.viewBoq');
+	Route::post('/view-product', 'BoqController@viewProduct')->name('admin.boq.viewproduct');
 	Route::post('/boq-name', 'BoqController@boqName')->name('admin.boq.boqName');
 	Route::post('/get-client-project', 'BoqController@getClientProject')->name('admin.boq.getClientProject');
 });

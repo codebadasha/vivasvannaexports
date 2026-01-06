@@ -8,9 +8,12 @@ use App\Models\ClientCompany;
 use App\Models\ClientCompanyContact;
 use App\Models\ClientCompanyInvitation;
 use App\Models\ClientGstDetail;
+use App\Models\ClientGstin;
 use App\Models\CompanyTeamMember;
 use App\Models\MasterLinkRegistration;
+use App\Services\PerfiosService;
 use App\Services\SurepassService;
+use App\Services\ZohoBookService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -60,7 +63,7 @@ class CompanyRegisterController extends Controller
         }
     }
 
-    public function store(Request $request, SurepassService $surepass)
+    public function store(Request $request, SurepassService $surepass, ZohoBookService $zoho, PerfiosService $perfios)
     {
         // dd($request->cin !== null ? 1 : 0);
         try {
@@ -127,7 +130,7 @@ class CompanyRegisterController extends Controller
             }
             
 
-            DB::transaction(function () use ($request, $invitation, $panNumber, $msme_register) {
+            DB::transaction(function () use ($perfios, $zoho, $request, $invitation, $panNumber, $msme_register) {
                 $uuid = (string) Str::uuid();
 
                 $gstNumber = strtoupper($request->gstn);
@@ -200,6 +203,103 @@ class CompanyRegisterController extends Controller
                 $team->client_company_id = $company->id;
                 $team->admin_id = $teamMember->id;
                 $team->save();
+
+                $address = explode(', ', $request->address);
+
+                // Total parts
+                $count = count($address);
+
+                // Required fields
+                $billing_address = [
+                    'address'     => $address[0] ?? '',
+                    'street2'     => '',
+                    'city'        => $address[$count - 3] ?? '',
+                    'state'       => $address[$count - 2] ?? '',
+                    'state_code'  => '',
+                    'zip'         => $address[$count - 1] ?? '',
+                    'country'     => 'India'
+                ];
+
+                // Handle street2 (middle elements)
+                if ($count > 4) {
+                    // From index 1 up to count-4
+                    $street2Parts = array_slice($address, 1, $count - 4);
+                    $billing_address['street2'] = implode(', ', $street2Parts);
+                }
+
+                $zohoPayload = [
+                    'contact_name'        => $request->director_name,
+                    'company_name'        => $request->company_name,
+                    'contact_type'        => 'customer',
+                    'customer_sub_type'   => 'business',
+                    'gst_no'              => strtoupper($request->gstn),
+                    'gst_treatment'       => 'business_gst',
+                    'contact_persons'     => [],
+                    'billing_address'     => $billing_address,
+                    'shipping_address'     => $billing_address
+                ];
+
+                foreach ($request->authorized as $auth) {
+                    $nameParts = explode(' ', $auth['name'], 2);
+                    $zohoPayload['contact_persons'][] = [
+                        'salutation'          => '',
+                        'first_name'          => $nameParts[0] ?? '',
+                        'last_name'           => $nameParts[1] ?? '',
+                        'email'               => $auth['email'],
+                        'phone'               => $auth['mobile'],
+                        'mobile'              => $auth['mobile'],
+                        // 'is_primary_contact'  => empty($zohoPayload['contact_persons']) ? true : false,
+                        'enable_portal'       => false
+                    ];
+                }
+
+                // Add Additional Contact Persons
+                foreach ($request->contact as $contact) {
+                    $nameParts = explode(' ', $contact['name'], 2);
+                    $zohoPayload['contact_persons'][] = [
+                        'salutation'          => '',
+                        'first_name'          => $nameParts[0] ?? '',
+                        'last_name'           => $nameParts[1] ?? '',
+                        'email'               => $contact['email'],
+                        'phone'               => $contact['mobile'],
+                        'mobile'              => $contact['mobile'],
+                        // 'is_primary_contact'  => false,
+                        'enable_portal'       => false
+                    ];
+                }
+
+                $response = $zoho->createCustomer($zohoPayload);
+                if (!isset($response['code']) || $response['code'] != 0) {
+                    throw new \Exception('Zoho customer creation failed: ' . ($response['message'] ?? 'Unknown error'));
+                }
+
+                $zohoId = $response['contact']['contact_id'] ?? null;
+                $company->zoho_contact_id = $zohoId;
+                $company->save();
+
+                $perfiosResult = $perfios->searchGstByPan($panNumber);
+
+                if (!$perfiosResult['success'] && !empty($perfiosResult['data']['result']) || is_array($perfiosResult['data']['result'])) {
+                    $results   = $perfiosResult['data']['result'] ?? [];
+                    foreach ($results as $item) {
+                        $gstin = strtoupper($item['gstinId'] ?? '');
+                        if (empty($gstin)) continue;
+
+                        ClientGstin::updateOrCreate(
+                            ['zoho_contact_id' => $zohoId, 'gstin' => $gstin],
+                            [
+                                'pan_number' => $panNumber,
+                                'auth_status'         => !empty($item['authStatus']) ? $item['authStatus'] : null,
+                                'application_status'  => !empty($item['applicationStatus']) ? $item['applicationStatus'] : null,
+                                'email_id'            => !empty($item['emailId']) ? $item['emailId'] : null,
+                                'gstin_ref_id'        => !empty($item['gstinRefId']) ? $item['gstinRefId'] : null,
+                                'mob_num'             => !empty($item['mobNum']) ? $item['mobNum'] : null,
+                                'reg_type'            => !empty($item['regType']) ? $item['regType'] : null,
+                                'state'               => !empty($item['state']) ? $item['state'] : null
+                            ]
+                        );
+                    }
+                }
             });
             session([
                 'access_status' => true,

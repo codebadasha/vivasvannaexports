@@ -11,16 +11,25 @@
 
                 @if(in_array('role',$module))
                 <li>
-                    <a href="javascript: void(0);" class="has-arrow waves-effect">
+                    <a href="{{ route('admin.roleList') }}" class="waves-effect">
                         <i class="mdi mdi-lock-check-outline"></i>
                         <span>Organization Role</span>
                     </a>
-                    <ul class="sub-menu" aria-expanded="false">
+                    <!-- <ul class="sub-menu" aria-expanded="false">
                         @if(array_key_exists('role',$selectedAction) && in_array('add',$selectedAction['role']))
                         <li><a href="{{ route('admin.addRole') }}">Add Organization Role</a></li>
                         @endif
                         <li><a href="{{ route('admin.roleList') }}">All Organization Roles</a></li>
-                    </ul>
+                    </ul> -->
+                </li>
+                @endif
+
+                @if(in_array('team',$module))
+                <li>
+                    <a href="{{ route('admin.team.index') }}" class="waves-effect">
+                        <i class="mdi mdi-account-multiple-plus"></i>
+                        <span>Team</span>
+                    </a>
                 </li>
                 @endif
 
@@ -35,38 +44,31 @@
 
                 @if(in_array('supplier-company',$module))
                 <li>
-                    <a href="javascript: void(0);" class="has-arrow waves-effect">
+                    <a href="{{ route('admin.supplier.index') }}" class="waves-effect">
                         <i class="bx bx-briefcase-alt-2"></i>
                         <span>Supplier Company</span>
                     </a>
-                    <ul class="sub-menu" aria-expanded="false">
-                        @if(array_key_exists('supplier-company',$selectedAction) && in_array('add',$selectedAction['supplier-company']))
+                    <!-- <ul class="sub-menu" aria-expanded="false"> -->
+                        <!-- @if(array_key_exists('supplier-company',$selectedAction) && in_array('add',$selectedAction['supplier-company']))
                         <li><a href="{{ route('admin.supplier.create') }}">Add Supplier Company</a></li>
-                        @endif
-                        <li><a href="{{ route('admin.supplier.index') }}">All Supplier Companies</a></li>
-                    </ul>
+                        @endif -->
+                        <!-- <li><a href="{{ route('admin.supplier.index') }}">All Supplier Companies</a></li> -->
+                    <!-- </ul> -->
                 </li>
                 @endif
-                @if(in_array('team',$module))
-                <li>
-                    <a href="{{ route('admin.team.index') }}" class="waves-effect">
-                        <i class="mdi mdi-account-multiple-plus"></i>
-                        <span>Team</span>
-                    </a>
-                </li>
-                @endif
+                
                 @if(in_array('client-company',$module))
                 <li>
-                    <a href="javascript: void(0);" class="has-arrow waves-effect">
+                    <a href="{{ route('admin.client.index') }}" class="waves-effect">
                         <i class="mdi mdi-office-building"></i>
                         <span>Client Company</span>
                     </a>
-                    <ul class="sub-menu" aria-expanded="false">
+                    <!-- <ul class="sub-menu" aria-expanded="false">
                         @if(array_key_exists('client-company',$selectedAction) && in_array('add',$selectedAction['client-company']))
                         <li><a href="{{ route('admin.client.create') }}">Add Company</a></li>
                         @endif
                         <li><a href="{{ route('admin.client.index') }}">All Companies</a></li>
-                    </ul>
+                    </ul> -->
                 </li>
                 @endif
                 @if(in_array('invitation',$module))
@@ -90,63 +92,64 @@
                 @endif
                 @if(in_array('product',$module))
                 <li>
-                    <a href="javascript: void(0);" class="has-arrow waves-effect">
+                    <a href="{{ route('admin.product.index') }}" class="waves-effect">
                         <i class="bx bx-bookmark-plus"></i>
                         <span>Products</span>
                     </a>
-                    <ul class="sub-menu" aria-expanded="false">
-                        @if(array_key_exists('product',$selectedAction) && in_array('add',$selectedAction['product']))
+                    <!-- <ul class="sub-menu" aria-expanded="false"> -->
+                        <!-- @if(array_key_exists('product',$selectedAction) && in_array('add',$selectedAction['product']))
                         <li><a href="{{ route('admin.product.create') }}">Add Product</a></li>
-                        @endif
-                        <li><a href="{{ route('admin.product.index') }}">All Products</a></li>
-                    </ul>
+                        @endif -->
+                        <!-- <li><a href="{{ route('admin.product.index') }}">All Products</a></li> -->
+                    <!-- </ul> -->
                 </li>
                 @endif
                 @if(in_array('po',$module))
                 <li>
                     <a href="javascript: void(0);" class="has-arrow waves-effect">
                         <i class="bx bx-list-check"></i>
-                        <span>PO</span>
+                        <span>Orders</span>
                     </a>
                     <ul class="sub-menu" aria-expanded="false">
-                        @if(array_key_exists('po',$selectedAction) && in_array('add',$selectedAction['po']))
-                        <li><a href="{{ route('admin.po.create') }}">Add PO</a></li>
-                        @endif
-                        <li><a href="{{ route('admin.po.index') }}">All POs</a></li>
+                        <!-- @if(array_key_exists('po',$selectedAction) && in_array('add',$selectedAction['po'])) -->
+                        <!-- <li><a href="{{ route('admin.po.create') }}">Add PO</a></li> -->
+                        <!-- @endif -->
+                        <li><a href="{{ route('admin.po.index') }}">Purchase Orders</a></li>
+                        <li><a href="{{ route('admin.so.index') }}">Sales Orders</a></li>
                     </ul>
                 </li>
                 @endif
                 @if(in_array('project',$module))
                 <li>
-                    <a href="javascript: void(0);" class="has-arrow waves-effect">
+                    <a href="{{ route('admin.project.index') }}" class="">
                         <i class="bx bx-bookmark-plus"></i>
                         <span>Projects</span>
                     </a>
-                    <ul class="sub-menu" aria-expanded="false">
+                    <!-- <ul class="sub-menu" aria-expanded="false">
                         @if(array_key_exists('project',$selectedAction) && in_array('add',$selectedAction['project']))
                         <li><a href="{{ route('admin.project.create') }}">Add Project</a></li>
                         @endif
                         <li><a href="{{ route('admin.project.index') }}">All Projects</a></li>
-                    </ul>
+                    </ul> -->
                 </li>
                 @endif
                 @if(in_array('boq',$module))
                 <li>
-                    <a href="javascript: void(0);" class="has-arrow waves-effect">
+                    <a href="{{ route('admin.boq.index') }}" class="">
                         <i class="bx bx-task"></i>
                         <span>BOQ</span>
                     </a>
-                    <ul class="sub-menu" aria-expanded="false">
+                    <!-- <ul class="sub-menu" aria-expanded="false">
                         @if(array_key_exists('boq',$selectedAction) && in_array('add',$selectedAction['boq']))
                         <li><a href="{{ route('admin.boq.create') }}">Add BOQ</a></li>
                         @endif
                         <li><a href="{{ route('admin.boq.index') }}">All BOQs</a></li>
-                    </ul>
+                    </ul> -->
                 </li>
                 @endif
                 @if(in_array('invoice',$module))
                 <li>
-                    <a href="{{ route('admin.invoice.index') }}" class="waves-effect">
+                    <a href="{{ route('admin.so.allinvoice.index') }}" class="waves-effect">
                         <i class="bx bx-right-indent"></i>
                         <span>All Invoices</span>
                     </a>

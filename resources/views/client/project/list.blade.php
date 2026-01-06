@@ -22,6 +22,9 @@
 
         <div class="row">
             <div class="col-12">
+                <div class="text-end mb-4">
+                    <a href="{{ route('client.project.create') }}" class="btn btn-primary"><i class="fa fa-plus pe-1"></i>Add</a>
+                </div>
                 <div class="card">
                     <div class="card-body">
                         <form action="{{ route('admin.project.index') }}">

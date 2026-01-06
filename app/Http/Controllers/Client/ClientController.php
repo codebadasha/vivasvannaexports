@@ -8,6 +8,7 @@ use App\Models\ClientCompanyAuthorizedPerson;
 use App\Models\ClientCompanyContact;
 use App\Models\ClientGstDetail;
 use App\Models\PurchaseOrderItem;
+use App\Models\SalesOrderItem;
 use Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -64,16 +65,31 @@ class ClientController extends GlobalController
 
         $user = Auth::guard('client')->user();
 
-        $detail = PurchaseOrderItem::with(['po' => function ($q) {
-            $q->with(['project', 'boq']);
-        }, 'varation' => function ($q) {
-            $q->with(['product']);
-        }])
-            ->whereHas('po', function ($q) {
-                $q->where('client_id', Auth::guard('client')->user()->id);
+        // $detail = PurchaseOrderItem::with(['po' => function ($q) {
+        //     $q->with(['project', 'boq']);
+        // }, 'varation' => function ($q) {
+        //     $q->with(['product']);
+        // }])
+        //     ->whereHas('po', function ($q) {
+        //         $q->where('client_id', Auth::guard('client')->user()->id);
+        //     })
+        //     ->get();
+
+        $detail = SalesOrderItem::with([
+            'salesOrder.project',
+            'salesOrder.client',
+            'product'
+        ])
+            ->whereHas('salesOrder', function ($q) {
+                $q->where('customer_id', Auth::guard('client')->user()->zoho_contact_id);
             })
+            ->orderBy('id', 'desc')
             ->get();
-        $kycDetails = ClientCompany::select(['id', 'cin', 'cin_verify', 'is_credit_req', 'is_auto_password', 'is_terms_accepted', 'turnover'])->where('id', $user->id)->first();
+            
+        $kycDetails = ClientCompany::with('gstDetails')
+            ->select(['id', 'cin', 'cin_verify', 'is_credit_req', 'is_auto_password', 'is_terms_accepted', 'turnover'])
+            ->where('id', $user->id)
+            ->first();
 
         $amount = [
             "0" => 'After Apply Unlock Your limit',
@@ -84,7 +100,7 @@ class ClientController extends GlobalController
             "5" => '5,00,00,000',
         ];
         $kycDetails['credit_amount'] =  $amount[$kycDetails->turnover];
-        
+
         return view('client.dashboard.dashboard', compact('detail', 'kycDetails'));
     }
 

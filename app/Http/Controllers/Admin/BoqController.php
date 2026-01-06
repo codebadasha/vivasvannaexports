@@ -6,8 +6,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\BoqItem;
 use App\Models\Boq;
+use App\Models\Product;
 use App\Models\Project;
 use App\Models\ProductVariation;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class BoqController extends Controller
 {
@@ -23,19 +27,17 @@ class BoqController extends Controller
 
         if(isset($request->boq_start_date) && $request->boq_start_date != ''){
             $filter = 1;
-            $query->whereBetween(\DB::raw('date(created_at)'),[date('Y-m-d',strtotime(str_replace('/','-',trim($request->boq_start_date)))),date('Y-m-d',strtotime(str_replace('/','-',trim($request->boq_end_date))))]);
+            $query->whereBetween(DB::raw('date(created_at)'),[date('Y-m-d',strtotime(str_replace('/','-',trim($request->boq_start_date)))),date('Y-m-d',strtotime(str_replace('/','-',trim($request->boq_end_date))))]);
         }
 
         if(isset($request->client) && $request->client != ''){
             $filter = 1;
             $query->where('client_id',$request->client);
         }
-
+        
         if(isset($request->project) && $request->project != ''){
             $filter = 1;
-            $query->whereHas('project',function($q) use ($request){
-                $q->where('name','LIKE','%'.$request->project.'%');
-            });
+            $query->where('project_id',$request->project);
         }
 
 
@@ -48,36 +50,148 @@ class BoqController extends Controller
         return view('admin.boq.add');
     }
 
-    public function store(Request $request){
+    public function store(Request $request)
+    {
+        // 🔹 Step 1: Validate input
+        $validator = Validator::make($request->all(), [
+            'name'        => 'required|string|max:255',
+            'client_id'   => 'required|exists:client_companies,id',
+            'project_id'  => 'required|exists:projects,id',
+            'item'        => 'required|array|min:1',
+            'item.*.product_id' => 'required|exists:products,zoho_item_id',
+            'item.*.qty'        => 'required|numeric|min:0.01',
+            'item.*.unit'       => 'required|string|max:50',
+        ], [
+            'name.required' => 'Please enter BOQ name.',
+            'client_id.required' => 'Please select a client.',
+            'project_id.required' => 'Please select a project.',
+            'item.required' => 'Please add at least one item.',
+            'item.*.product_id.required' => 'Product field is required for each item.',
+            'item.*.qty.required' => 'Quantity is required for each item.',
+            'item.*.unit.required' => 'Unit is required for each item.',
+        ]);
 
-        $boq = new Boq;
-        $boq->name = $request->name;
-        $boq->client_id = $request->client_id;
-        $boq->project_id = $request->project_id;
-        $boq->save();
-
-        if(!is_null($request->item)){
-            foreach($request->item as $ik => $iv){
-                $item = new BoqItem;
-                $item->boq_id = $boq->id;
-                $item->category_id = $iv['category_id'];
-                $item->variation_id = $iv['variation'];
-                $item->qty = $iv['qty'];
-                $item->remaining_qty = $iv['qty'];
-                $item->unit = $iv['unit'];
-                $item->save();
-            }
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $route = $request->btn_value == 'save_and_update' ? 'admin.boq.create' : 'admin.boq.index';
-        
-        return redirect(route($route))->with('messages', [
-            [
-                'type' => 'success',
-                'title' => 'Project',
-                'message' => 'Project successfully added',
-            ],
-        ]); 
+        // 🔹 Step 2: Begin Transaction
+        DB::beginTransaction();
+
+        try {
+            $boq = Boq::create([
+                'name'       => $request->name,
+                'client_id'  => $request->client_id,
+                'project_id' => $request->project_id,
+            ]);
+
+            foreach ($request->item as $iv) {
+                BoqItem::create([
+                    'boq_id'        => $boq->id,
+                    'product_id'    => $iv['product_id'],
+                    'qty'           => $iv['qty'],
+                    'remaining_qty' => $iv['qty'],
+                    'unit'          => $iv['unit'],
+                ]);
+            }
+
+            DB::commit();
+
+            $route = $request->btn_value === 'save_and_update' ? 'admin.boq.create' : 'admin.boq.index';
+
+            return redirect(route($route))->with('messages', [
+                [
+                    'type'    => 'success',
+                    'title'   => 'BOQ',
+                    'message' => 'BOQ successfully created.',
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('BOQ Store Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
+            return redirect()->back()->withInput()->with('messages', [
+                [
+                    'type'    => 'error',
+                    'title'   => 'Error',
+                    'message' => 'Failed to create BOQ. Please try again later.',
+                ],
+            ]);
+        }
+    }
+
+    /**
+     * Update existing BOQ.
+     */
+    public function update(Request $request)
+    {
+        // dd($request->toArray());s
+        // 🔹 Step 1: Validate input
+        $validator = Validator::make($request->all(), [
+            'id'          => 'required|exists:boqs,id',
+            'name'        => 'required|string|max:255',
+            'client_id'   => 'required|exists:client_companies,id',
+            'project_id'  => 'required|exists:projects,id',
+            'item'        => 'required|array|min:1',
+            'item.*.product_id' => 'required|exists:products,zoho_item_id',
+            'item.*.qty'        => 'required|numeric|min:0.01',
+            'item.*.unit'       => 'required|string|max:50',
+        ]);
+
+        if ($validator->fails()) {
+            dd($validator->errors()->toArray());
+        }
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // 🔹 Step 2: Begin Transaction
+        DB::beginTransaction();
+
+        try {
+            $boq = Boq::findOrFail($request->id);
+
+            $boq->update([
+                'name'       => $request->name,
+                'client_id'  => $request->client_id,
+                'project_id' => $request->project_id,
+            ]);
+
+            // Recreate BOQ items
+            BoqItem::where('boq_id', $boq->id)->delete();
+
+            foreach ($request->item as $iv) {
+                BoqItem::create([
+                    'boq_id'        => $boq->id,
+                    'product_id'    => $iv['product_id'],
+                    'qty'           => $iv['qty'],
+                    'remaining_qty' => $iv['qty'],
+                    'unit'          => $iv['unit'],
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect(route('admin.boq.index'))->with('messages', [
+                [
+                    'type'    => 'success',
+                    'title'   => 'BOQ',
+                    'message' => 'BOQ successfully updated.',
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('BOQ Update Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
+            return redirect()->back()->withInput()->with('messages', [
+                [
+                    'type'    => 'error',
+                    'title'   => 'Error',
+                    'message' => 'Failed to update BOQ. Please try again later.',
+                ],
+            ]);
+        }
     }
 
     public function edit($id){
@@ -85,37 +199,6 @@ class BoqController extends Controller
         $detail = Boq::where('id',base64_decode($id))->with(['item'])->first();
 
         return view('admin.boq.edit',compact('detail'));
-    }
-
-    public function update(Request $request){
-
-        $boq = Boq::findOrFail($request->id);
-        $boq->name = $request->name;
-        $boq->client_id = $request->client_id;
-        $boq->project_id = $request->project_id;
-        $boq->save();
-
-        if(!is_null($request->item)){
-            BoqItem::where('boq_id',$request->id)->delete();
-            foreach($request->item as $ik => $iv){
-                $item = new BoqItem;
-                $item->boq_id = $boq->id;
-                $item->category_id = $iv['category_id'];
-                $item->variation_id = $iv['variation'];
-                $item->qty = $iv['qty'];
-                $item->remaining_qty = $iv['qty'];
-                $item->unit = $iv['unit'];
-                $item->save();
-            }
-        }
-
-        return redirect(route('admin.boq.index'))->with('messages', [
-            [
-                'type' => 'success',
-                'title' => 'BOQ',
-                'message' => 'BOQ successfully updated',
-            ],
-        ]);
     }
 
     public function delete($id){
@@ -138,23 +221,16 @@ class BoqController extends Controller
         return \Response::json(['status' => 'success','html' => $html]);
     }
 
-    public function getProductVariation(Request $request){
-
-        $getProductVariation = ProductVariation::where('product_id',$request->product_id)->get();
-
-        return $getProductVariation;
-    }
-
     public function getUnit(Request $request){
 
-        $getUnit = ProductVariation::where('id',$request->id)->first();
+       $unit = Product::where('zoho_item_id', $request->id)->value('unit');
 
-        return $getUnit;
+        return ['unit' => $unit];
     }
 
-    public function viewBoq(Request $request){
+    public function viewProduct(Request $request){
 
-        $boq = Boq::where('id',$request->boq_id)->with(['item' => function($q) { $q->with(['category','grade']); }])->first();
+        $boq = Boq::where('id',$request->boq_id)->with(['item' => function($q) { $q->with(['product']); }])->first();
 
         $html = view('admin.boq.boq_detail',compact('boq'))->render();
 

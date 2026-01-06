@@ -9,7 +9,7 @@
                     <h4 class="mb-0 font-size-18">Edit Project</h4>
                     <div class="page-title-right">
                         <ol class="breadcrumb m-0">
-                            <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Project List</a></li>
+                            <li class="breadcrumb-item"><a href="{{ route('admin.project.index') }}">Project List</a></li>
                             <li class="breadcrumb-item active">Edit Project</li>
                         </ol>
                     </div>

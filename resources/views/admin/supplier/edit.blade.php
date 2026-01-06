@@ -9,7 +9,7 @@
                     <h4 class="mb-0 font-size-18">Edit Supplier Company</h4>
                     <div class="page-title-right">
                         <ol class="breadcrumb m-0">
-                            <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Supplier Company List</a></li>
+                            <li class="breadcrumb-item"><a href="{{ route('admin.supplier.index') }}">Supplier Company List</a></li>
                             <li class="breadcrumb-item active">Edit Supplier Company</li>
                         </ol>
                     </div>
@@ -126,7 +126,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-12">
+                <!-- <div class="col-lg-12">
                     <div class="card">
                         <div class="card-body">
                             <h3 class="card-title">Supplier Products</h3>
@@ -164,8 +164,8 @@
                             <a href="javascript:void(0);" class="btn btn-primary btn-sm mt-3 addNewProduct" data-id="{{ isset($pk) ? $pk + 1 : 0 }}"><i class="fa fa-plus"></i></a>
                         </div>
                     </div>
-                </div>
-                <div class="col-lg-12">
+                </div> -->
+                <div class="col-lg-6 offset-lg-3">
                     <div class="card">
                         <div class="card-body">
                             <div class="button-items">

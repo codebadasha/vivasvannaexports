@@ -27,13 +27,26 @@ class ProjectController extends Controller
         $filter = 0;
 
         $query = Project::query();
+        // $investor = Auth::guard('investor')->user()->id;
+
+        // $invoices = \App\Models\SalesOrderInvoice::with(['salesOrder'])
+        //     ->whereHas('salesOrder', function ($q) use ($investor) {
+        //         $q->where('investor_id', $investor);
+        //     })
+        //     ->whereNotIn('status', ['draft', 'void', 'viewed'])
+        //     ->orderBy('id', 'desc')
+        //     ->get();
+
+        // $project = $invoices
+        //     ->pluck('salesOrder.project')
+        //     ->filter()
+        //     ->unique()
+            // ->values();
 
         if(isset($request->client) && $request->client != ''){
             $filter = 1;
             $query->where('client_id',$request->client);
-        } else {
-            $query->whereIn('client_id',$this->investorclient);
-        }
+        } 
 
         if(isset($request->po_start_date) && $request->po_start_date != ''){
             $filter = 1;

@@ -9,7 +9,7 @@
                     <h4 class="mb-0 font-size-18">Add Supplier Company</h4>
                     <div class="page-title-right">
                         <ol class="breadcrumb m-0">
-                            <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Supplier Company List</a></li>
+                            <li class="breadcrumb-item"><a href="{{ route('admin.supplier.index') }}">Supplier Company List</a></li>
                             <li class="breadcrumb-item active">Add Supplier Company</li>
                         </ol>
                     </div>
@@ -117,7 +117,7 @@
                     </div>
                 </div>
 
-                <div class="col-lg-12">
+                <!-- <div class="col-lg-12">
                     <div class="card">
                         <div class="card-body">
                             <h3 class="card-title">Supplier Products</h3>
@@ -143,7 +143,7 @@
                             <a href="javascript:void(0);" class="btn btn-primary btn-sm mt-3 addNewProduct" data-id="1"><i class="fa fa-plus"></i></a>
                         </div>
                     </div>
-                </div>
+                </div> -->
 
                 <div class="col-lg-12">
                     <div class="card">
@@ -185,55 +185,56 @@
         $(this).closest('.authorized').remove();
     })
 
-    $(document).on('click','.addNewProduct',function(){
-        var id = $(this).data('id');
+    // $(document).on('click','.addNewProduct',function(){
+    //     var id = $(this).data('id');
 
-        var html = '<div class="mb-3 productRow row"><div class=col-md-4><label>Product Title <span class=mandatory>*</span></label> <input name="product['+id+'][title]" class="form-control productTitle" data-msg="Please enter product title" placeholder="Name" data-key="'+id+'" required> <input name="product['+id+'][product_id]" type="hidden" class="productId"></div><div class="col-md-4"><label>Capacity <span class=mandatory>*</span></label> <input name="product['+id+'][capacity]" class="form-control numeric" data-msg="Please enter capacity" placeholder="Capacity" required type="text"></div><div class=col-md-3><label>Unit <span class=mandatory>*</span></label> <select class="form-control productUnit'+id+'" data-msg="Please select unit" name="product['+id+'][unit]" required><option value="">Select Unit</select></div><div class="col-md-1 mt-4"><a href="javascript:void(0);" class="removeProductRow btn btn-danger mt-1"><i class="fa fa-trash"></i></a></div></div>';
+    //     var html = '<div class="mb-3 productRow row"><div class=col-md-4><label>Product Title <span class=mandatory>*</span></label> <input name="product['+id+'][title]" class="form-control productTitle" data-msg="Please enter product title" placeholder="Name" data-key="'+id+'" required> <input name="product['+id+'][product_id]" type="hidden" class="productId"></div><div class="col-md-4"><label>Capacity <span class=mandatory>*</span></label> <input name="product['+id+'][capacity]" class="form-control numeric" data-msg="Please enter capacity" placeholder="Capacity" required type="text"></div><div class=col-md-3><label>Unit <span class=mandatory>*</span></label> <select class="form-control productUnit'+id+'" data-msg="Please select unit" name="product['+id+'][unit]" required><option value="">Select Unit</select></div><div class="col-md-1 mt-4"><a href="javascript:void(0);" class="removeProductRow btn btn-danger mt-1"><i class="fa fa-trash"></i></a></div></div>';
 
-        $('.products').append(html);
-        $('.products').data('id',++id);
-    })
+    //     $('.products').append(html);
+    //     $('.products').data('id',++id);
+    // })
 
-    $(document).on('click','.removeProductRow',function(){
-        $(this).closest('.productRow').remove();
-    })
+    // $(document).on('click','.removeProductRow',function(){
+    //     $(this).closest('.productRow').remove();
+    // })
 
-    $(document).on('keypress','.productTitle',function(){
-        var element = $(this);
-        $.ajax({
-            url: "/admin/supplier-company/get-product-list",
-            type: "POST",
-            dataType: "JSON",
-            data:{ title : $(this).val()},
-            success: function(data){
-                autocompletedatalist = data;
-                $('.productTitle').autocomplete({ 
-                    source: autocompletedatalist,
-                    focus: function(event, ui) {
-                        event.preventDefault();
-                        this.value = ui.item.label;
-                    },
-                    select: function(event, ui) {
-                        if(jQuery.inArray($(this).val(), product) === -1){
-                            product.push(ui.item.label);
-                            element.val(ui.item.label);
-                            element.siblings('.productId').val(ui.item.value);
-                            var arr = ui.item.unit.split(',');
-                            $('.productUnit'+element.data('key')).empty().append('<option value="">Select Unit</option>');
-                            $.each(arr,function(key,value){
-                                $('.productUnit'+element.data('key')).append('<option value="'+value+'">'+value+'</option>');
-                            });
-                            return false;
-                        } else {
-                            toastr.error('Same product type can not be added in supplier company')
-                            element.val('');
-                            return false;
-                        }
-                    },
-                });
-            }
-        });
-    })
+    // $(document).on('keypress','.productTitle',function(){
+    //     var element = $(this);
+    //     $.ajax({
+    //         url: "/admin/supplier-company/get-product-list",
+    //         type: "POST",
+    //         dataType: "JSON",
+    //         data:{ title : $(this).val()},
+    //         success: function(data){
+    //             autocompletedatalist = data;
+    //             $('.productTitle').autocomplete({ 
+    //                 source: autocompletedatalist,
+    //                 focus: function(event, ui) {
+    //                    event.preventDefault();
+    //                     this.value = ui.item.label;
+    //                 },
+    //                 select: function(event, ui) {
+    //                    if(jQuery.inArray($(this).val(), product) === -1){
+    //                         product.push(ui.item.label);
+    //                         element.val(ui.item.label);
+    //                        element.siblings('.productId').val(ui.item.value);
+    //                         var arr = ui.item.unit.split(',');
+    //                         $('.productUnit'+element.data('key')).empty().append('<option value="">Select Unit</option>');
+    //                        $.each(arr,function(key,value){
+    //                            $('.productUnit'+element.data('key')).append('<option value="'+value+'">'+value+'</option>');
+    //                        });
+    //                        return false;
+    //                    } else {
+    //                        toastr.error('Same product type can not be added in supplier company')
+    //                        element.val('');
+    //                        return false;
+    //                        return false;
+    //                    }
+    //                },
+    //            });
+    //        }
+    //    });
+    // })
 
 
 

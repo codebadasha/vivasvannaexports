@@ -8,6 +8,7 @@ use App\Models\Blog;
 use App\Models\BloodGroup;
 use App\Models\Inquiry;
 use App\Models\PurchaseOrderItem;
+use App\Models\SalesOrderItem;
 use App\Models\Team;
 use Hash;
 use Illuminate\Http\Request;
@@ -17,45 +18,54 @@ use Validator;
 
 class AdminController extends GlobalController
 {
-    public function __construct(){
+    public function __construct()
+    {
         $this->middleware('admin');
     }
 
     /**
-        * Index page
-        *
-        * @return to dashboard page
-    **/
-    public function index(){
+     * Index page
+     *
+     * @return to dashboard page
+     **/
+    public function index()
+    {
 
-        $detail = PurchaseOrderItem::with(['po' => function($q) { $q->with(['project','boq','client']); },'varation' => function($q) { $q->with(['product']); }])->get();
+        $detail = SalesOrderItem::with([
+            'salesOrder.project',
+            'salesOrder.client',
+            'product'
+        ])->orderBy('id','desc')->get();
 
-        return view('admin.dashboard.dashboard',compact('detail'));
+        // dd($detail[2]);
+        return view('admin.dashboard.dashboard', compact('detail'));
     }
 
     /**
-        * Edit profile
-        *
-        * @param mixed $profile
-        *
-        * @return to edit profile page
-    **/
-    public function editProfile(){
-        
-        $profile = Admin::where('id',Auth::guard('admin')->user()->id)->first();
+     * Edit profile
+     *
+     * @param mixed $profile
+     *
+     * @return to edit profile page
+     **/
+    public function editProfile()
+    {
 
-        return view('admin.dashboard.edit_profile',compact('profile')); 
+        $profile = Admin::where('id', Auth::guard('admin')->user()->id)->first();
+
+        return view('admin.dashboard.edit_profile', compact('profile'));
     }
 
     /**
-        * Update admin profile
-        *
-        * @param $name, $email, $mobile fields save in Admin database
-        *
-        * @return to index page with data store in Admin database
-    **/
-    public function updateProfile(Request $request){
-        
+     * Update admin profile
+     *
+     * @param $name, $email, $mobile fields save in Admin database
+     *
+     * @return to index page with data store in Admin database
+     **/
+    public function updateProfile(Request $request)
+    {
+
         $update = Admin::findOrFail(Auth::guard('admin')->user()->id);
         $update->name = $request->name;
         $update->email = $request->email;
@@ -76,23 +86,25 @@ class AdminController extends GlobalController
     }
 
     /**
-        * Change admin password
-        *
-        * @return to change admin password page
-    **/
-    public function changeAdminPassword(){
+     * Change admin password
+     *
+     * @return to change admin password page
+     **/
+    public function changeAdminPassword()
+    {
 
         return view('admin.dashboard.change_password');
     }
 
     /**
-        * Update admin password
-        *
-        * @param $password field save in Admin database
-        *
-        * @return to index page with data store in Admin database
-    **/
-    public function updateAdminPassword(Request $request){
+     * Update admin password
+     *
+     * @param $password field save in Admin database
+     *
+     * @return to index page with data store in Admin database
+     **/
+    public function updateAdminPassword(Request $request)
+    {
 
         $this->validate($request, [
             'old_password' => 'required',
@@ -102,7 +114,7 @@ class AdminController extends GlobalController
         $adminId = Auth::guard('admin')->user()->id;
         $user = Admin::where('id', '=', $adminId)->first();
 
-        if(Hash::check($request->old_password,$user->password)){
+        if (Hash::check($request->old_password, $user->password)) {
 
             $users = Admin::findOrFail($adminId);
             $users->password = Hash::make($request->new_password);
@@ -114,18 +126,16 @@ class AdminController extends GlobalController
                     'title' => 'Password',
                     'message' => 'Password Successfully changed',
                 ],
-            ]); 
-
+            ]);
         } else {
-          
+
             return redirect(route('admin.changeAdminPassword'))->with('messages', [
                 [
                     'type' => 'error',
                     'title' => 'Password',
                     'message' => 'Plese check your current password',
                 ],
-            ]); 
+            ]);
         }
     }
-
 }

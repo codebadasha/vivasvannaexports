@@ -81,7 +81,7 @@
                             <div class="card-body">
                                 <div class="d-flex">
                                     <div class="flex-grow-1">Total PO Amount</p>
-                                        <h4 class="mb-0"><a href="{{ route('client.po.index') }}?client={{ Auth::guard('client')->user()->id }}">{{ \App\Models\PurchaseOrder::where('client_id',Auth::guard('client')->user()->id)->where('is_active',1)->where('is_delete',0)->sum('subtotal') }}</a></h4>
+                                        <h4 class="mb-0"><a href="#?client={{ Auth::guard('client')->user()->id }}">₹ {{ number_format(\App\Models\SalesOrder::where('customer_id', Auth::guard('client')->user()->zoho_contact_id)->sum('total'), 2, '.', ',') }}</a></h4>
                                     </div>
 
                                     <div class="flex-shrink-0 align-self-center ">
@@ -101,7 +101,7 @@
                                 <div class="d-flex">
                                     <div class="flex-grow-1">
                                         <p class="text-muted fw-medium">Total Invoice Raised</p>
-                                        <h4 class="mb-0"><a href="{{ route('client.invoice.index') }}?client={{ Auth::guard('client')->user()->id }}">{{ \App\Models\PurchaseOrderInvoice::wherehas('po',function($q) { $q->where('client_id',Auth::guard('client')->user()->id); })->where('is_active',1)->where('is_delete',0)->sum('invoice_amount') }}</a></h4>
+                                        <h4 class="mb-0"><a href="{{ route('client.invoice.index') }}?client={{ Auth::guard('client')->user()->id }}">₹ {{ number_format(\App\Models\SalesOrderInvoice::wherehas('salesOrder',function($q) { $q->where('customer_id',Auth::guard('client')->user()->zoho_contact_id); })->sum('total'), 2, '.', ',') }}</a></h4>
                                     </div>
 
                                     <div class="flex-shrink-0 align-self-center">
@@ -120,8 +120,8 @@
                             <div class="card-body">
                                 <div class="d-flex">
                                     <div class="flex-grow-1">
-                                        <p class="text-muted fw-medium">Total Invoice Raised</p>
-                                        <h4 class="mb-0"><a href="{{ route('client.invoice.index') }}?client={{ Auth::guard('client')->user()->id }}">{{ \App\Models\PurchaseOrderInvoice::where('mark_as_paid',1)->wherehas('po',function($q) { $q->where('client_id',Auth::guard('client')->user()->id); })->where('is_active',1)->where('is_delete',0)->count() }}</a></h4>
+                                        <p class="text-muted fw-medium">Total Invoice Paid</p>
+                                        <h4 class="mb-0"><a href="{{ route('client.invoice.index') }}?client={{ Auth::guard('client')->user()->id }}">{{ \App\Models\SalesOrderInvoice::where('status','paid')->wherehas('salesOrder',function($q) { $q->where('customer_id',Auth::guard('client')->user()->zoho_contact_id); })->count() }}</a></h4>
                                     </div>
 
                                     <div class="flex-shrink-0 align-self-center">
@@ -141,7 +141,7 @@
                                 <div class="d-flex">
                                     <div class="flex-grow-1">
                                         <p class="text-muted fw-medium">Total Received Payment</p>
-                                        <h4 class="mb-0"><a href="{{ route('client.invoice.index') }}?client={{ Auth::guard('client')->user()->id }}">{{ \App\Models\PurchaseOrderInvoice::where('mark_as_paid',1)->wherehas('po',function($q) { $q->where('client_id',Auth::guard('client')->user()->id); })->where('is_active',1)->where('is_delete',0)->sum('invoice_amount') }}</a></h4>
+                                        <h4 class="mb-0"><a href="{{ route('client.invoice.index') }}?client={{ Auth::guard('client')->user()->id }}">₹ {{ number_format(\App\Models\SalesOrderInvoice::where('status','paid')->wherehas('salesOrder',function($q) { $q->where('customer_id',Auth::guard('client')->user()->zoho_contact_id); })->sum('total'), 2, '.', ',') }}</a></h4>
                                     </div>
 
                                     <div class="flex-shrink-0 align-self-center">
@@ -161,7 +161,7 @@
                                 <div class="d-flex">
                                     <div class="flex-grow-1">
                                         <p class="text-muted fw-medium">Over Due Amount</p>
-                                        <h4 class="mb-0"><a href="{{ route('client.invoice.index') }}?client={{ Auth::guard('client')->user()->id }}">{{ \App\Models\PurchaseOrderInvoice::whereDate('due_date','<',date('Y-m-d'))->where('mark_as_paid',0)->wherehas('po',function($q) { $q->where('client_id',Auth::guard('client')->user()->id); })->where('is_active',1)->where('is_delete',0)->sum('invoice_amount') }}</a></h4>
+                                        <h4 class="mb-0"><a href="{{ route('client.invoice.index') }}?client={{ Auth::guard('client')->user()->id }}">₹ {{ number_format(\App\Models\SalesOrderInvoice::whereDate('status','overdue')->wherehas('salesOrder',function($q) { $q->where('customer_id',Auth::guard('client')->user()->zoho_contact_id); })->sum('total'), 2, '.', ',') }}</a></h4>
                                     </div>
 
                                     <div class="flex-shrink-0 align-self-center">
@@ -197,7 +197,6 @@
                 </div>
             </div>
         </div>
-
         <div class="row">
             <div class="col-12">
                 <div class="card">
@@ -220,11 +219,11 @@
                                 @foreach($detail as $ok => $ov)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
-                                    <td>{{ !is_null($ov->po) && !is_null($ov->po->project) ? $ov->po->project->name : '--' }}</td>
-                                    <td>{{ !is_null($ov->po) ? $ov->po->po_number : '--' }}</td>
-                                    <td>{{ !is_null($ov->varation) ? $ov->varation->product->product_type.' '.$ov->varation->grade : '--' }}</td>
-                                    <td>{{ $ov->remaining_boq_qty }}</td>
-                                    <td>{{ $ov->qty }}</td>
+                                    <td>{{ !is_null($ov->salesOrder) && !is_null($ov->salesOrder->client) ? $ov->salesOrder->client->company_name : '--' }}</td>
+                                    <td>{{ !is_null($ov->salesOrder) ? $ov->salesOrder->salesorder_number : '--' }}</td>
+                                    <td>{{ !is_null($ov->product) ? $ov->product->name : '---' }}</td>
+                                    <td>{{ $ov->remaining_boq_qty ? 'yes' : '---'}}</td>
+                                    <td>{{ intval($ov->quantity) }} {{$ov->unit}}</td>
                                     <td>Coming Soon</td>
                                     <td>Coming Soon</td>
                                 </tr>
@@ -236,6 +235,7 @@
                 </div>
             </div> <!-- end col -->
         </div> <!-- end row -->
+
         @endif
     </div>
 </div>
@@ -251,36 +251,36 @@
 
             <div class="modal-body text-center pt-0 pb-4 mb-3">
                 <h2 class="fw-bold mb-2 text-success">Your Credit Options Await</h2>
-                @if($kycDetails->cin_verify == 0)
-
-                <p class="lead mb-4">
-                    Now eligible for credit. Take advantage of your credit limit to grow your business.
-                </p>
-                @else
+                @if(empty($kycDetails->cin) && $kycDetails->cin_verify == 0 && in_array($kycDetails->gstDetails->constitution_of_business, ['Proprietorship', 'Partnership']))
 
                 <p class="lead mb-4">
                     Please complete your KYC to unlock your company’s credit facilities and access funding.
                 </p>
+                @else
+                <p class="lead mb-4">
+                    Now eligible for credit. Take advantage of your credit limit to grow your business.
+                </p>
+
                 @endif
 
-                @if($kycDetails->turnover != '0')
+                <!-- @if($kycDetails->turnover == '0') -->
                 <div class="d-flex justify-content-center align-items-center mb-4">
-                    <i class="fas fa-coins fa-3x text-warning me-3"></i>
-                    <span class="display-4 fw-bold text-gradient-success">{{ $kycDetails->credit_amount }}</span>
+                    <!-- <i class="fas fa-coins fa-3x text-warning me-3"></i> -->
+                    <span class="display-6 fw-bold text-gradient-success">Unlock Your limit</span>
                 </div>
-                @else
+                <!-- @else
                 <h3 class="lead mb-4">
-                    {{ $kycDetails->credit_amount }}
+                    ₹ {{ $kycDetails->credit_amount }}
                 </h3>
-                @endif
+                @endif -->
                 <!-- CTA Button -->
-                @if($kycDetails->cin_verify == 1)
-                <a href="editCompanyProfile" class="btn btn-lg btn-primary px-5">
-                    Apply For credit
+                @if(empty($kycDetails->cin) && $kycDetails->cin_verify == 0 && in_array($kycDetails->gstDetails->constitution_of_business, ['Proprietorship', 'Partnership']))
+                <a href="{{ route('client.editCompanyProfile') }}" class="btn btn-lg btn-primary px-5">
+                    Complete KYC
                 </a>
                 @else
-                <a href="editCompanyProfile" class="btn btn-lg btn-primary px-5">
-                    Complete KYC
+                <a href="{{ route('client.credit.add') }" class="btn btn-lg btn-primary px-5">
+                    Apply For credit
                 </a>
                 @endif
 

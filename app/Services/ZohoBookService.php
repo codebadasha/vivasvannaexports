@@ -97,7 +97,10 @@ class ZohoBookService
         Log::info('Zoho API Request', ['url' => $url]); // Debug the request URL
 
         $token = $this->getAccessToken();
-        $response = Http::withOptions(['verify' => false])->withHeaders([
+        $response = Http::withOptions([
+            'verify' => false,
+            'timeout' => 30, // ⏰ increase timeout to 30 seconds
+        ])->retry(3, 2000)->withHeaders([
             'Authorization' => "Zoho-oauthtoken {$token}",
         ])->get($url);
 
@@ -116,7 +119,10 @@ class ZohoBookService
     {
         $url = "{$this->apiUrl}/{$endpoint}?organization_id={$this->orgId}";
         $token = $this->getAccessToken();
-        $response = Http::withHeaders([
+        $response = Http::withOptions([
+            'verify' => false,
+            'timeout' => 30, // ⏰ increase timeout to 30 seconds
+        ])->retry(3, 2000)->withHeaders([
             'Authorization' => "Zoho-oauthtoken {$token}",
         ])->post($url, $data);
 
@@ -186,7 +192,7 @@ class ZohoBookService
     {
         return $this->get("settings/taxes/$taxesId");
     }
-    
+
     /**
      * Get details of a specific Tax
      */
@@ -195,7 +201,7 @@ class ZohoBookService
         return $this->get("settings/taxgroups/$taxesId");
     }
 
-    
+
     /**
      * Get list of item
      */
@@ -214,7 +220,7 @@ class ZohoBookService
     }
 
     /**
-     * Get list of item
+     * Get list of Customer
      */
     public function getAllCustomer(array $params = []): array
     {
@@ -224,50 +230,251 @@ class ZohoBookService
 
 
     /**
-     * Get details of a specific item
+     * Get details of a specific Customer
      */
     public function getCustomer(string $customerId): array
     {
         return $this->get("contacts/$customerId");
     }
-    
-    
-    
-    
-    
+
+    /**
+     * Get list of Vendor
+     */
+    public function getAllVendor(array $params = []): array
+    {
+        $params['contact_type'] = 'vendor';
+        return $this->get("contacts", $params);
+    }
+
+
+    /**
+     * Get details of a specific Vendor
+     */
+    public function getVendor(string $vendorId): array
+    {
+        return $this->get("contacts/$vendorId");
+    }
+
+    /**
+     * Get list of Vendor
+     */
+    public function getAllSalesOrders(array $params = []): array
+    {
+        // $params["filter_by"] = "Status.Invoiced";
+        return $this->get("salesorders", $params);
+    }
+
+
+    /**
+     * Get details of a specific Vendor
+     */
+    public function getSalesOrder(string $salesorderId, array $params = [])
+    {
+        // $params['accept'] = 'pdf';
+        return $this->get("salesorders/$salesorderId", $params);
+    }
+
     /**
      * Get a list of invoices
      */
     public function getAllInvoices(array $params = []): array
     {
-
         return $this->get('invoices', $params);
     }
 
+    /**
+     * Get details of a specific Vendor
+     */
+    public function getInvoices(string $salesorderId, array $params = [])
+    {
+        return $this->get("invoices/$salesorderId", $params);
+    }
 
-    
 
     /**
-     * Create a new item
+     * Get list of Vendor
      */
-    public function createItem(array $data): array
+    public function getAllPurchaseorders(array $params = []): array
     {
-        return $this->post('items', $data);
+        $params["Status"] = "billed";
+        return $this->get("purchaseorders", $params);
+    }
+
+
+    /**
+     * Get details of a specific Vendor
+     */
+    public function getPurchaseorder(string $purchaseorderId, array $params = [])
+    {
+        return $this->get("purchaseorders/$purchaseorderId", $params);
     }
 
     /**
-     * Update an existing item
+     * Get a list of invoices
      */
-    public function updateItem(string $itemId, array $data): array
+    public function getAllBills(array $params = []): array
     {
-        return $this->put("items/{$itemId}", $data);
+        return $this->get('bills', $params);
     }
 
     /**
-     * Delete an item
+     * Get details of a specific Vendor
      */
-    public function deleteItem(string $itemId): array
+    public function getbill(string $billId, array $params = [])
     {
-        return $this->delete("items/{$itemId}");
+        return $this->get("bills/$billId", $params);
+    }
+
+
+    public function getSalesOrderHtml(string $salesorderId, array $params = []): string
+    {
+        $params['accept'] = 'html';
+        $url = "salesorders/$salesorderId";
+
+        Log::info('Fetching Zoho Sales Order in HTML', ['salesorder_id' => $salesorderId, 'params' => $params]);
+
+        $token = $this->getAccessToken();
+        $response = Http::withOptions(['verify' => false])->withHeaders([
+            'Authorization' => "Zoho-oauthtoken {$token}",
+        ])->get("{$this->apiUrl}/{$url}?organization_id={$this->orgId}&" . http_build_query($params));
+
+        if (!$response->successful()) {
+            Log::error('Zoho Sales Order HTML fetch failed', [
+                'salesorder_id' => $salesorderId,
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+            throw new \Exception('Failed to fetch Sales Order HTML: ' . $response->status() . ' - ' . $response->body());
+        }
+
+        return $response->body();
+    }
+
+    public function getSalesOrderPdf(string $salesorderId): string
+    {
+        $params['accept'] = 'pdf';
+        $url = "salesorders/$salesorderId";
+
+        Log::info('Fetching Zoho Sales Order PDF', ['salesorder_id' => $salesorderId]);
+
+        $token = $this->getAccessToken();
+
+        $response = Http::withOptions(['verify' => false])->withHeaders([
+            'Authorization' => "Zoho-oauthtoken {$token}",
+        ])->get("{$this->apiUrl}/{$url}?organization_id={$this->orgId}&" . http_build_query($params));
+
+        if (!$response->successful()) {
+            Log::error('Zoho Sales Order PDF fetch failed', [
+                'salesorder_id' => $salesorderId,
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+            throw new \Exception('Failed to fetch Sales Order PDF: ' . $response->status() . ' - ' . $response->body());
+        }
+
+        return $response->body(); // PDF binary
+    }
+
+    public function getInvoiceHtml(string $invoiceId, array $params = []): string
+    {
+        $params['accept'] = 'html';
+        $url = "invoices/$invoiceId";
+
+        Log::info('Fetching Zoho Sales Order in HTML', ['invoice_id' => $invoiceId, 'params' => $params]);
+
+        $token = $this->getAccessToken();
+        $response = Http::withOptions(['verify' => false])->withHeaders([
+            'Authorization' => "Zoho-oauthtoken {$token}",
+        ])->get("{$this->apiUrl}/{$url}?organization_id={$this->orgId}&" . http_build_query($params));
+
+        if (!$response->successful()) {
+            Log::error('Zoho Sales Order HTML fetch failed', [
+                'invoice_id' => $invoiceId,
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+            throw new \Exception('Failed to fetch Sales Order HTML: ' . $response->status() . ' - ' . $response->body());
+        }
+
+        return $response->body();
+    }
+
+    public function getInvoicePdf(string $invoiceId): string
+    {
+        $params['accept'] = 'pdf';
+        $url = "invoices/$invoiceId";
+
+        Log::info('Fetching Zoho Invoice PDF', ['invoice_id' => $invoiceId]);
+
+        $token = $this->getAccessToken();
+
+        $response = Http::withOptions(['verify' => false])->withHeaders([
+            'Authorization' => "Zoho-oauthtoken {$token}",
+        ])->get("{$this->apiUrl}/{$url}?organization_id={$this->orgId}&" . http_build_query($params));
+
+        if (!$response->successful()) {
+            Log::error('Zoho Invoice PDF fetch failed', [
+                'invoice_id' => $invoiceId,
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+            throw new \Exception('Failed to fetch Invoice PDF: ' . $response->status() . ' - ' . $response->body());
+        }
+
+        return $response->body(); // PDF binary
+    }
+
+    public function getPurchaseOrderHtml(string $purchaseorderId, array $params = []): string
+    {
+        $params['accept'] = 'html';
+        $url = "purchaseorders/$purchaseorderId";
+
+        Log::info('Fetching Zoho purchase Order in HTML', ['salesorder_id' => $purchaseorderId, 'params' => $params]);
+
+        $token = $this->getAccessToken();
+        $response = Http::withOptions(['verify' => false])->withHeaders([
+            'Authorization' => "Zoho-oauthtoken {$token}",
+        ])->get("{$this->apiUrl}/{$url}?organization_id={$this->orgId}&" . http_build_query($params));
+
+        if (!$response->successful()) {
+            Log::error('Zoho purchaseorders Order HTML fetch failed', [
+                'salesorder_id' => $purchaseorderId,
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+            throw new \Exception('Failed to fetch Sales Order HTML: ' . $response->status() . ' - ' . $response->body());
+        }
+
+        return $response->body();
+    }
+
+    public function getPurchaseOrderPdf(string $purchaseorderId): string
+    {
+        $params['accept'] = 'pdf';
+        $url = "purchaseorders/$purchaseorderId";
+
+        Log::info('Fetching Zoho Sales Order PDF', ['purchaseorder_id' => $purchaseorderId]);
+
+        $token = $this->getAccessToken();
+
+        $response = Http::withOptions(['verify' => false])->withHeaders([
+            'Authorization' => "Zoho-oauthtoken {$token}",
+        ])->get("{$this->apiUrl}/{$url}?organization_id={$this->orgId}&" . http_build_query($params));
+
+        if (!$response->successful()) {
+            Log::error('Zoho Sales Order PDF fetch failed', [
+                'purchaseorder_id' => $purchaseorderId,
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+            throw new \Exception('Failed to fetch Purchase Order PDF: ' . $response->status() . ' - ' . $response->body());
+        }
+
+        return $response->body(); // PDF binary
+    }
+
+    public function createCustomer(array $payload): array
+    {
+        return $this->post("contacts", $payload);
     }
 }
