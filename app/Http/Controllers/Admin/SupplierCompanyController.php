@@ -19,7 +19,7 @@ class SupplierCompanyController extends GlobalController
 
     public function index(){
 
-        $supplier = SupplierCompany::with(['addresses' => function ($q) {$q->where('type', 'billing');}])->where('is_delete',0)->get();
+        $supplier = SupplierCompany::select(['id','company_name','mobile','email'])->where('is_delete',0)->get();
 
         return view('admin.supplier.list',compact('supplier'));
     }

@@ -48,11 +48,10 @@
                                 
                                 <div class="form-group">
                                     <span style="color:red;float:right;" class="pull-right">* is mandatory</span>
-                                </div>
-
+                                </div>                        
                                 <div class="form-group">
-                                    <label for="username">Email<span class="mandatory red">*</span></label>
-                                    <input type="email" class="form-control" name="email" id="username" placeholder="Enter email" required>
+                                    <label>GSTN<span class="mandatory red">*</span></label>
+                                    <input type="text" name="gstn" class="form-control" placeholder="Enter GSTN" required>
                                 </div>
         
                                 <div class="mt-3 d-grid">

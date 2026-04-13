@@ -122,19 +122,16 @@ return [
         ],
         'admins' => [
             'provider' => 'admins',
-            'email' => 'admin.auth.emails.password',
             'table' => 'admins_password_resets',
             'expire' => 60,
         ],
         'investor' => [
             'provider' => 'investors',
-            'email' => 'investor.auth.emails.password',
             'table' => 'investor_password_resets',
             'expire' => 60,
         ],
         'client' => [
             'provider' => 'clients',
-            'email' => 'client.auth.emails.password',
             'table' => 'client_password_resets',
             'expire' => 60,
         ],

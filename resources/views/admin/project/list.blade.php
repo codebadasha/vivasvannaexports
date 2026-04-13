@@ -1,6 +1,10 @@
 @extends('layouts.admin')
 @section('title','All Projects')
 @section('content')
+@php
+    $showActionColumn = !empty(array_intersect(['edit','delete'], $selectedAction['project']));
+@endphp
+
 <div class="page-content">
     <div class="container-fluid">
         <!-- start page title -->
@@ -12,6 +16,13 @@
                     <div class="page-title-right">
                         <ol class="breadcrumb m-0">
                             <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+                            @if(request()->has('from_client') && request()->from_client == 1 && isset($client))
+                                <li class="breadcrumb-item">
+                                    <a href="{{ route('admin.client.clientDashboard', base64_encode($client->id)) }}">
+                                        {{ $client->company_name }} Dashboard
+                                    </a>
+                                </li>
+                            @endif
                             <li class="breadcrumb-item active">All Projects</li>
                         </ol>
                     </div>
@@ -31,30 +42,29 @@
                     <div class="card-body">
                         <form action="{{ route('admin.project.index') }}">
                             <div class="row">  
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-group">
+                                        <label>Client</label>
+                                        <select class="form-control select2" name="client">
+                                            <option value="">Select Client</option>
+                                            @forelse($clients as $sk => $sv)
+                                                <option value="{{ $sv->id }}" {{ $sv->id == request()->client ? 'selected' : ''}}>{{ $sv->company_name }}</option>
+                                            @empty
+                                                <option value="">No Data Found</option>
+                                            @endforelse
+                                        </select>
+                                    </div>
+                                </div>
 
                                 <div class="col-md-4 mb-3">
                                     <div class="form-group">
                                         <label>Daterange</label>
                                         <div>
                                             <div class="input-daterange input-group" data-date-format="dd/mm/yyyy" data-date-autoclose="true" data-provide="datepicker" autocomplete="off">
-                                                <input type="text" class="form-control" name="po_start_date" autocomplete="off" value="{{ request()->po_start_date }}" placeholder="dd/mm/yyyy">
-                                                <input type="text" class="form-control" name="po_end_date" autocomplete="off" value="{{ request()->po_end_date }}" placeholder="dd/mm/yyyy">
+                                                <input type="text" class="form-control" name="created_start_date" autocomplete="off" value="{{ request()->created_start_date }}" placeholder="dd/mm/yyyy">
+                                                <input type="text" class="form-control" name="created_end_date" autocomplete="off" value="{{ request()->created_end_date }}" placeholder="dd/mm/yyyy">
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-4 mb-3">
-                                    <div class="form-group">
-                                        <label>Client</label>
-                                        <select class="form-control select2" name="client">
-                                            <option value="">Select Client</option>
-                                            @forelse(\App\Models\ClientCompany::where('is_active',1)->where('is_delete',0)->get() as $sk => $sv)
-                                                <option value="{{ $sv->id }}" {{ $sv->id == request()->client ? 'selected' : ''}}>{{ $sv->company_name }}</option>
-                                            @empty
-                                                <option value="">No Data Found</option>
-                                            @endforelse
-                                        </select>
                                     </div>
                                 </div>
 
@@ -87,7 +97,9 @@
                                     <th>Project</th>
                                     <th>Description</th>
                                     <th>Created On</th>
+                                    @if($showActionColumn)
                                     <th class='notexport'>Actions</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -99,6 +111,7 @@
                                         <td>{{ $ov->name }}</td>
                                         <td><a href="javascript:void(0);" class="btn btn-secondary btn-sm viewDescription" data-content="{{ $ov->description }}"><i class="fa fa-info"></i></a></td>
                                         <td>{{ date('d/m/Y',strtotime($ov->created_at)) }}</td>
+                                        @if($showActionColumn)
                                         <td>
                                             @if(array_key_exists('project',$selectedAction) && in_array('edit',$selectedAction['project']))
                                                 <a class="btn btn-primary waves-effect waves-light" href="{{ route('admin.project.edit',base64_encode($ov->id)) }}" role="button">
@@ -111,6 +124,7 @@
                                                 </a>
                                             @endif
                                         </td>
+                                        @endif
                                     </tr>
                                 @endforeach
                             @endif

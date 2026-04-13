@@ -38,6 +38,7 @@ class ZohoSyncProducts extends Command
             $resp = $zoho->getAllItem([
                 'page'     => $page,
                 'per_page' => $perPage,
+                'sort_column' => 'created_time'
             ]);
 
             $Products = $resp['items'] ?? [];

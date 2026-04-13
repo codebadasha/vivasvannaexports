@@ -1,6 +1,9 @@
 @extends('layouts.admin')
 @section('title','All Supplier Company')
 @section('content')
+@php
+    $showActionColumn = !empty(array_intersect(['edit','delete','authorized'], $selectedAction['supplier-company']));
+@endphp
 <div class="page-content">
     <div class="container-fluid">
         <!-- start page title -->
@@ -36,12 +39,14 @@
                                 <tr>
                                     <th>Sr. No</th>
                                     <th>Company Name</th>
-                                    <th>Address</th>
+                                    <!-- <th>Address</th> -->
                                     <th width="200">Contact Info</th>
-                                    <th>GSTN</th>
+                                    <!-- <th>GSTN</th>
                                     <th>IEC Code</th>
-                                    <th>PAN Number</th>
+                                    <th>PAN Number</th> -->
+                                    @if($showActionColumn)
                                     <th class='notexport'>Actions</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -50,28 +55,31 @@
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $ov->company_name }}</td>
-                                    @php
-                                    $addr = $ov->addresses->first(); // Only billing address is loaded
-                                    @endphp
-
-                                    <td>
-                                        @if($addr)
-                                        {!! collect([
+                                   
+                                    <!-- addr = $ov->addresses->first(); // Only billing address is loaded -->
+                                    
+                                    <!-- <td>
+                                        
+                                         collect([
                                             $addr->address,
                                             $addr->street2,
                                             trim("{$addr->city}, {$addr->state}", ' ,'),
                                             trim("{$addr->country} - {$addr->zip}", ' -'),
                                             ])
                                         ->filter() // remove empty/null values
-                                        ->implode('<br>') !!}
-                                        @else
-                                        -
-                                        @endif
+                                        ->implode('<br>') 
+                                  
+
+                                        
+                                    </td> -->
+                                    <td>
+                                        Email : <b>{{ $ov->email ?? $ov->email }}</b>
+                                        <br>Mobile : {!! !empty($ov->mobile) ? '<b>'.$ov->mobile.'</b>' : '' !!}
                                     </td>
-                                    <td>{{ $ov->mobile ? $ov->mobile. '<br>' : '' }}{{ $ov->email }}</td>
-                                    <td>{{ $ov->gstn }}</td>
-                                    <td>{{ $ov->iec_code }}</td>
+                                    <!-- <td>{{ $ov->gstn }}</td>
                                     <td>{{ $ov->pancard }}</td>
+                                    <td>{{ $ov->iec_code }}</td> -->
+                                     @if($showActionColumn)
                                     <td>
                                         @if(array_key_exists('supplier-company',$selectedAction) && in_array('authorized',$selectedAction['supplier-company']))
                                         <a href="javascript:void(0);" class="btn btn-info authorizedPerson mb-2" data-id="{{ $ov->id }}">
@@ -91,6 +99,7 @@
                                         </a>
                                         @endif
                                     </td>
+                                    @endif
                                 </tr>
                                 @endforeach
                                 @endif

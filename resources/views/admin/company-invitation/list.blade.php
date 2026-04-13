@@ -23,13 +23,10 @@
         <!-- end page title -->
         <div class="row">
             <div class="col-12">
-                <div id="masterLinkContainer" class="text-end mb-4">
-                    @if(array_key_exists('client-company',$selectedAction) && in_array('invitation link',$selectedAction['client-company']))
-                    <button type="button" id="generateMasterLink" class="btn btn-primary"><i class="fa fa-plus pe-1"></i>Master link</button>
-                    @if($masterLink)
-                    <button type="button" id="copyMasterLink" data-link="{{ $masterLink }}" class="btn btn-success"><i class="fa fa-copy pe-1"></i>Master link</button>
-                    @endif
-                    @endif
+                <div class="text-end mb-4">
+                    @if(array_key_exists('invitation',$selectedAction) && in_array('send',$selectedAction['invitation']))
+                        <a href="{{ route('admin.invitations.create') }}" class="btn btn-primary"><i class="fa fa-paper-plane pe-1"> </i>Invitation</a>
+                    @endif                    
                 </div>
                 <div class="card">
                     <div class="card-body">
@@ -42,7 +39,9 @@
                                     <th>Invite Date</th>
                                     <th>Status</th>
                                     <th>Link</th>
+                                    @if(array_key_exists('invitation',$selectedAction) && in_array('send',$selectedAction['invitation']))
                                     <th class='notexport'>Actions</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -63,6 +62,7 @@
                                         @endif
                                     </td>
                                     <td>{{ $ov->url }}</td>
+                                    @if(array_key_exists('invitation',$selectedAction) && in_array('send',$selectedAction['invitation']))
                                     <td>
                                         @if($ov->status == 1)
                                         <button type="button" class="btn btn-sm btn-primary waves-effect waves-light me-1 copyInvitation" data-link="{{ $ov->url }}" title="Copy Invitation Link">
@@ -73,6 +73,7 @@
                                         </button>
                                         @endif
                                     </td>
+                                    @endif
                                 </tr>
                                 @endforeach
                                 @endif

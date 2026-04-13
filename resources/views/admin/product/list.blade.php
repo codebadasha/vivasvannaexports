@@ -1,6 +1,9 @@
 @extends('layouts.admin')
 @section('title','All Products')
 @section('content')
+@php
+    $showActionColumn = !empty(array_intersect(['edit','delete'], $selectedAction['product']));
+@endphp
 <div class="page-content">
     <div class="container-fluid">
         <!-- start page title -->
@@ -23,11 +26,11 @@
         <!-- end page title -->
         <div class="row">
             <div class="col-12">
-                 <!-- <div class="text-end mb-4">
-                    @if(array_key_exists('project',$selectedAction) && in_array('add',$selectedAction['project']))
+                 <div class="text-end mb-4">
+                    @if(array_key_exists('product',$selectedAction) && in_array('add',$selectedAction['product']))
                     <a href="{{ route('admin.product.create') }}" class="btn btn-primary"><i class="fa fa-plus pe-1"></i>Add</a>
                     @endif
-                </div> -->
+                </div>
                 <div class="card">
                     <div class="card-body">
 
@@ -43,6 +46,9 @@
                                     <td>Rate</td>
                                     <td>HSN/SAC</td>
                                     <td>Usage Unit</td>
+                                    @if($showActionColumn)
+                                    <th class='notexport'>Actions</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -64,7 +70,8 @@
                                     <td>{{ $ov->rate }}</td>
                                     <td>{{ $ov->hsn_or_sac }}</td>
                                     <td>{{ $ov->unit }}</td>
-                                    <!-- <td>
+                                    @if($showActionColumn)
+                                    <td>
                                         @if(array_key_exists('product',$selectedAction) && in_array('edit',$selectedAction['product']))
                                         <a class="btn btn-primary waves-effect waves-light" href="{{ route('admin.product.edit',base64_encode($ov->id)) }}" role="button">
                                             Edit
@@ -75,7 +82,8 @@
                                             Delete
                                         </a>
                                         @endif
-                                    </td> -->
+                                    </td>
+                                    @endif
                                 </tr>
                                 @endforeach
                                 @endif

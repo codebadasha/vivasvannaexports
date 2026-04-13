@@ -78,14 +78,11 @@
                         <span>Client Invitation</span>
                     </a>
                     <ul class="sub-menu" aria-expanded="false">
-                        @if(array_key_exists('invitation',$selectedAction) && in_array('send',$selectedAction['invitation']))
-                        <li><a href="{{ route('admin.invitations.create') }}">Send Invitation</a></li>
-                        @endif
 
-                        <li><a href="{{ route('admin.invitations.index') }}">All Invitation</a></li>
+                        <li><a href="{{ route('admin.invitations.index') }}">Invitation List</a></li>
 
                         @if(array_key_exists('invitation',$selectedAction) && in_array('master_register',$selectedAction['invitation']))
-                        <li><a href="{{ route('admin.invitations.masterLink') }}">Master link's</a></li>
+                        <li><a href="{{ route('admin.invitations.masterLink') }}">Register By Master link</a></li>
                         @endif
                     </ul>
                 </li>
@@ -104,7 +101,7 @@
                     <!-- </ul> -->
                 </li>
                 @endif
-                @if(in_array('po',$module))
+                @if(in_array('po',$module) || in_array('so',$module))
                 <li>
                     <a href="javascript: void(0);" class="has-arrow waves-effect">
                         <i class="bx bx-list-check"></i>
@@ -114,8 +111,12 @@
                         <!-- @if(array_key_exists('po',$selectedAction) && in_array('add',$selectedAction['po'])) -->
                         <!-- <li><a href="{{ route('admin.po.create') }}">Add PO</a></li> -->
                         <!-- @endif -->
+                         @if(in_array('po',$module))
                         <li><a href="{{ route('admin.po.index') }}">Purchase Orders</a></li>
+                        @endif
+                        @if(in_array('so',$module))
                         <li><a href="{{ route('admin.so.index') }}">Sales Orders</a></li>
+                        @endif
                     </ul>
                 </li>
                 @endif
@@ -133,20 +134,15 @@
                     </ul> -->
                 </li>
                 @endif
-                @if(in_array('boq',$module))
-                <li>
-                    <a href="{{ route('admin.boq.index') }}" class="">
+                <!-- @if(in_array('boq',$module)) -->
+                <!-- <li>
+                    <a href="#" class="">
                         <i class="bx bx-task"></i>
                         <span>BOQ</span>
+                        route('admin.boq.index')
                     </a>
-                    <!-- <ul class="sub-menu" aria-expanded="false">
-                        @if(array_key_exists('boq',$selectedAction) && in_array('add',$selectedAction['boq']))
-                        <li><a href="{{ route('admin.boq.create') }}">Add BOQ</a></li>
-                        @endif
-                        <li><a href="{{ route('admin.boq.index') }}">All BOQs</a></li>
-                    </ul> -->
-                </li>
-                @endif
+                </li> -->
+                <!-- @endif -->
                 @if(in_array('invoice',$module))
                 <li>
                     <a href="{{ route('admin.so.allinvoice.index') }}" class="waves-effect">
@@ -155,14 +151,15 @@
                     </a>
                 </li>
                 @endif
-                @if(in_array('transaction',$module))
-                <li>
-                    <a href="{{ route('admin.transaction.index') }}" class="waves-effect">
+                <!-- @if(in_array('transaction',$module)) -->
+                <!-- <li>
+                    <a href="#" class="waves-effect">
                         <i class="bx bx-sort"></i>
                         <span>All Trasnaction</span>
                     </a>
-                </li>
-                @endif
+                    route('admin.transaction.index')
+                </li> -->
+                <!-- @endif -->
                 @if(in_array('policy',$module))
                 <li>
                     <a href="{{ route('admin.policyList') }}" class="waves-effect">

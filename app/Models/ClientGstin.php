@@ -9,7 +9,7 @@ class ClientGstin extends Model
     protected $table = 'client_gstins';
 
     protected $fillable = [
-        'zoho_contact_id',
+        'client_company_id',
         'gstin',
         'pan_number',
         'auth_status',
@@ -25,6 +25,6 @@ class ClientGstin extends Model
 
     public function company()
     {
-        return $this->belongsTo(ClientCompany::class, 'zoho_contact_id');
+        return $this->belongsTo(ClientCompany::class);
     }
 }

@@ -11,9 +11,9 @@ Route::post('login', 'Auth\LoginController@login')->name('admin.postlogin');
 Route::get('logout/{id?}', 'Auth\LoginController@logout')->name('admin.logout');
 
 //forget and reset password
-Route::get('password/reset', 'Auth\ForgotPasswordController@showLinkRequestForm')->name('admin.auth.password.reset');
+Route::get('password/forgot', 'Auth\ForgotPasswordController@showLinkRequestForm')->name('admin.auth.password.reset');
+Route::get('password/reset/{token?}', 'Auth\ResetPasswordController@showResetForm')->name('password.reset');
 Route::post('password/email', 'Auth\ForgotPasswordController@sendResetLinkEmail')->name('admin.passwordemail');
-Route::get('password/reset/{token?}', 'Auth\ResetPasswordController@showResetForm')->name('admin.auth.password.reset');
 Route::post('password/reset', 'Auth\ResetPasswordController@reset')->name('admin.resetpassword');
 
 //Dashboard Route....
@@ -21,13 +21,30 @@ Route::get('/', 'AdminController@index')->name('admin.dashboard');
 
 Route::get('/run-custom-migrations', function () {
     $migrations = [
-        'database/migrations/2025_08_18_040538_create_api_call_log_table.php',
-        'database/migrations/2025_08_24_164152_update_client_companies_table.php',
-        'database/migrations/2025_08_25_040939_create_client_gst_details_table.php',
-        'database/migrations/2025_08_27_165801_create_client_company_invitations_table.php',
-        'database/migrations/2025_08_30_021032_add_is_default_to_admins_table.php',
-        'database/migrations/2025_08_31_094620_create_master_link_registrations_table.php',
-        'database/migrations/2025_08_31_154451_update_client_companies_table.php',
+		'database\migrations\2026_02_09_113428_add_zoho_fields_to_admin_table.php',
+		'database\migrations\2026_02_09_155238_create_sales_orders_table.php',
+		'database\migrations\2026_02_10_054354_create_sales_orders_documents_table.php',
+		'database\migrations\2026_02_09_155210_create_investor_salesorder_table.php',
+		'database\migrations\2026_02_10_150030_create_sales_order_invoices_table.php',
+		'database\migrations\2026_02_10_150038_create_sales_order_invoice_documents_table.php',
+		'database\migrations\2026_02_10_150047_create_sales_order_invoice_eway_bills_table.php',
+		'database\migrations\2026_02_12_073030_add_column_to_sales_order_invoices_table.php',
+		'database\migrations/2026_02_15_110814_create_jobs_table.php',
+		'database\migrations\2026_02_18_202531_create_credit_requests_table.php',
+		'database\migrations\2026_02_18_202545_create_credit_request_bank_statement_reports_table.php',
+		'database\migrations\2026_02_18_202550_create_credit_request_gst_score_reports_table.php',
+		'database\migrations\2026_02_18_202607_create_credit_request_balance_sheets_table.php',
+		'database\migrations\2026_02_18_221405_add_perfios_institution_id_to_banks_table.php',
+		'database\migrations\2026_02_18_224433_update_bank_report_table_add_txnid_and_report_files.php',
+		'database\migrations\2026_02_19_124454_add_zoho_role_id_to_roles_table.php',
+		'database\migrations\2026_02_20_123236_add_client_company_id_to_master_link_registrations_table.php',
+		'database\migrations\2026_02_21_121722_add_zoho_fields_to_purchase_orders_table.php ',
+		'database\migrations\2026_02_21_134017_convert_tables_to_innodb.php',
+		'database\migrations/2026_02_21_131742_create_purchase_order_documents_table.php',
+		'database\migrations/2026_02_22_053941_alter_client_companies_table.php',
+		'database\migrations\2026_02_24_110453_add_zoho_fields_to_projects_table.php',
+		'database\migrations\2026_02_26_182626_create_investor_client_table.php',
+		'database\migrations\2026_02_27_103724_alter_sales_order_invoice_eway_bills_table.php',
     ];
 
     foreach ($migrations as $migration) {
@@ -102,8 +119,18 @@ Route::group(['prefix' => 'team'], function () {
 	Route::post('/set-default-team-member ', 'TeamController@setDefaultTeamMember')->name('admin.team.setDefaultTeamMember');
 	Route::post('/check-member-email', 'TeamController@checkMemberEmail')->name('admin.team.checkMemberEmail');
 	Route::post('/check-member-mobile', 'TeamController@checkMemberMobile')->name('admin.team.checkMemberMobile');
+	Route::get('/zoho/sync-users', 'TeamController@syncZohoUsers')->name('zoho.sync.users');
 });
 
+
+Route::group(['prefix' => 'invitations'], function () {
+	Route::get('/list', [ClientCompanyInvitationController::class, 'index'])->name('admin.invitations.index');
+	Route::get('/master-link-register/list', [ClientCompanyInvitationController::class, 'masterLink'])->name('admin.invitations.masterLink');
+	Route::get('/send', [ClientCompanyInvitationController::class, 'create'])->name('admin.invitations.create');
+	Route::post('/send', [ClientCompanyInvitationController::class, 'store'])->name('admin.invitations.store');
+	Route::get('/master-link/create', [ClientCompanyInvitationController::class, 'createMasterInvitation'])->name('admin.invitations.createMasterInvitation');
+	Route::get('/resend/{token}', [ClientCompanyInvitationController::class, 'resend'])->name('admin.invitations.resend');
+});
 
 Route::group(['prefix' => 'client-company'], function () {
 	Route::get('/get-client-projects/{clientId}', 'ClientCompanyController@getClientProjects')->name('admin.client.getClientProjects');
@@ -114,12 +141,6 @@ Route::group(['prefix' => 'client-company'], function () {
 	Route::get('/edit/{id}', 'ClientCompanyController@edit')->name('admin.client.edit');
 	Route::post('/update', 'ClientCompanyController@update')->name('admin.client.update');
 	Route::get('/delete/{id}', 'ClientCompanyController@delete')->name('admin.client.delete');
-	Route::get('/invitations/list', [ClientCompanyInvitationController::class, 'index'])->name('admin.invitations.index');
-	Route::get('/invitations/master-link/list', [ClientCompanyInvitationController::class, 'masterLink'])->name('admin.invitations.masterLink');
-	Route::get('/invitation/send/', [ClientCompanyInvitationController::class, 'create'])->name('admin.invitations.create');
-	Route::post('/invitation/send/', [ClientCompanyInvitationController::class, 'store'])->name('admin.invitations.store');
-	Route::get('/create/master/invitation', [ClientCompanyInvitationController::class, 'createMasterInvitation'])->name('admin.invitations.createMasterInvitation');
-
 	Route::get('invitations/download/{filename}', function ($filename) {
 		$filepath = storage_path('app/' . $filename);
 		if (file_exists($filepath)) {
@@ -128,7 +149,6 @@ Route::group(['prefix' => 'client-company'], function () {
 		abort(404);
 	})->name('admin.invitations.download');
 
-	Route::get('invitation/resend/{token}', [ClientCompanyInvitationController::class, 'resend'])->name('admin.invitations.resend');
 	Route::post('/change-team-member-status', 'ClientCompanyController@changeTeamMemberStatus')->name('admin.client.changeTeamMemberStatus');
 	Route::post('/check-member-email', 'ClientCompanyController@checkMemberEmail')->name('admin.client.checkMemberEmail');
 	Route::post('/check-member-mobile', 'ClientCompanyController@checkMemberMobile')->name('admin.client.checkMemberMobile');
@@ -137,12 +157,21 @@ Route::group(['prefix' => 'client-company'], function () {
 	Route::post('/store-team-member', 'ClientCompanyController@storeTeamMember')->name('admin.client.storeTeamMember');
 	Route::get('/download-document-zip/{id}', 'ClientCompanyController@downloadCompanyDocumentZip')->name('admin.client.downloadCompanyDocumentZip');
 	Route::post('/get-company-authorized-person', 'ClientCompanyController@getCompanyAuthorizedPerson')->name('admin.client.getCompanyAuthorizedPerson');
+	Route::post('/get-contact-persons', 'ClientCompanyController@getCompanyContactPersons')->name('admin.client.getContactPersons');
+	Route::post('/update-contact-person', 'ClientCompanyController@updateContactPerson')->name('admin.client.updateContactPersons');
+	Route::post('/delete-contact-person', 'ClientCompanyController@deleteContactPerson')->name('admin.client.deleteContactPersons');
+	Route::post('/set-primary-contact', 'ClientCompanyController@setPrimaryContact')->name('admin.client.setPrimaryContactPersons');
+
+
 	Route::post('/overdue-intrest-setting', 'ClientCompanyController@overdueIntrestSetting')->name('admin.client.overdueIntrestSetting');
 	Route::post('/update-tax-setting', 'ClientCompanyController@updateTaxSetting')->name('admin.client.updateTaxSetting');
 	Route::post('/change-company-status', 'ClientCompanyController@changeCompanyStatus')->name('admin.client.changeCompanyStatus');
 	Route::post('/verify-cin', 'ClientCompanyController@verifyCinNumber')->name('admin.client.verifyCin');
 
-	Route::get('/client-dashboard/{id}', 'ClientCompanyController@clientDashboard')->name('admin.client.clientDashboard');
+	Route::get('/dashboard/{id}', 'ClientCompanyController@clientDashboard')->name('admin.client.clientDashboard');
+
+	Route::post('/verify-company', 'ClientCompanyController@verifyCompany')->name('admin.client.verify-company');
+	Route::post('/assign-and-verify-company', 'ClientCompanyController@assignAndVerifyCompany')->name('admin.client.assign-and-verify-company');
 });
 
 Route::group(['prefix' => 'product'], function () {
@@ -156,7 +185,7 @@ Route::group(['prefix' => 'product'], function () {
 	Route::post('/check-product-type', 'ProductController@checkProductName')->name('admin.product.checkProductName');
 });
 
-Route::group(['prefix' => 'po'], function () {
+Route::group(['prefix' => 'purchase-order'], function () {
 	Route::get('/list', 'PurchaseOrderController@index')->name('admin.po.index');
 	Route::get('/create', 'PurchaseOrderController@create')->name('admin.po.create');
 	Route::post('/store', 'PurchaseOrderController@store')->name('admin.po.store');
@@ -179,16 +208,13 @@ Route::group(['prefix' => 'po'], function () {
 	Route::get('/purchase-order-download/{id}', 'PurchaseOrderController@purchaseorderdownload')->name('admin.po.purchaseorderdownload');
 });
 
-Route::group(['prefix' => 'so'], function () {
+Route::group(['prefix' => 'sales-order'], function () {
 	Route::get('/list', 'SalesOrdersController@index')->name('admin.so.index');
-	
+	Route::post('/open-document', 'SalesOrdersController@openDocument')->name('admin.so.openDocument');
 	Route::post('/assign-project', 'SalesOrdersController@assignProject')->name('admin.so.assignProject');
 	Route::post('/assign-investor', 'SalesOrdersController@assignInvestor')->name('admin.so.assignInvestor');
 	Route::get('/view-so-details/{id}', 'SalesOrdersController@view')->name('admin.so.viewso');
-	Route::get('/view-invoice/{id}', 'SalesOrdersController@viewinvoice')->name('admin.so.viewinvoice');
-	Route::get('/invoice-download/{id}', 'SalesOrdersController@invoicedownload')->name('admin.so.invoicedownload');
 	Route::get('/sales-order-download/{id}', 'SalesOrdersController@salesorderdownload')->name('admin.so.salesorderdownload');
-	Route::get('/all', 'SalesOrdersController@allInvoice')->name('admin.so.allinvoice.index');
 	// Route::get('/create', 'PurchaseOrderController@create')->name('admin.po.create');
 	// Route::post('/store', 'PurchaseOrderController@store')->name('admin.po.store');
 	// Route::get('/edit/{id}', 'PurchaseOrderController@edit')->name('admin.po.edit');
@@ -208,6 +234,12 @@ Route::group(['prefix' => 'so'], function () {
 });
 
 Route::group(['prefix' => 'invoice'], function () {
+	Route::get('/list', 'SalesOrdersController@allInvoice')->name('admin.so.allinvoice.index');
+	Route::get('/view-invoice/{id}', 'SalesOrdersController@viewinvoice')->name('admin.so.viewinvoice');
+	Route::get('/invoice-download/{id}', 'SalesOrdersController@invoicedownload')->name('admin.so.invoicedownload');
+	Route::get('/ewaybill/{id}', 'SalesOrdersController@viewEwayBill')->name('admin.invoice.ewaybill');
+	Route::get('/download-zip/{id}', 'SalesOrdersController@downloadInvoiceZip')->name('admin.so.invoicezip');
+
 	Route::get('/all-invoice-add', 'PurchaseOrderController@addAllInvoice')->name('admin.po.addAllInvoice');
 	Route::post('/get-all-purchase-order', 'PurchaseOrderController@getAllPurchaseOrder')->name('admin.po.getAllPurchaseOrder');
 	Route::post('/get-all-po-items', 'PurchaseOrderController@getPoItems')->name('admin.po.getPoItems');
@@ -233,28 +265,30 @@ Route::group(['prefix' => 'project'], function () {
 	Route::get('/delete/{id}', 'ProjectController@delete')->name('admin.project.delete');
 });
 
-Route::group(['prefix' => 'boq'], function () {
-	Route::get('/list', 'BoqController@index')->name('admin.boq.index');
-	Route::get('/create', 'BoqController@create')->name('admin.boq.create');
-	Route::post('/store', 'BoqController@store')->name('admin.boq.store');
-	Route::get('/edit/{id}', 'BoqController@edit')->name('admin.boq.edit');
-	Route::post('/update', 'BoqController@update')->name('admin.boq.update');
-	Route::get('/delete/{id}', 'BoqController@delete')->name('admin.boq.delete');
+// Route::group(['prefix' => 'boq'], function () {
+// 	Route::get('/list', 'BoqController@index')->name('admin.boq.index');
+// 	Route::get('/create', 'BoqController@create')->name('admin.boq.create');
+// 	Route::post('/store', 'BoqController@store')->name('admin.boq.store');
+// 	Route::get('/edit/{id}', 'BoqController@edit')->name('admin.boq.edit');
+// 	Route::post('/update', 'BoqController@update')->name('admin.boq.update');
+// 	Route::get('/delete/{id}', 'BoqController@delete')->name('admin.boq.delete');
 
-	Route::post('/get-new-item', 'BoqController@getNewItem')->name('admin.boq.getNewItem');
-	Route::post('/get-product-variation', 'BoqController@getProductVariation')->name('admin.boq.getProductVariation');
-	Route::post('/get-unit', 'BoqController@getUnit')->name('admin.boq.getUnit');
-	Route::post('/view-product', 'BoqController@viewProduct')->name('admin.boq.viewproduct');
-	Route::post('/boq-name', 'BoqController@boqName')->name('admin.boq.boqName');
-	Route::post('/get-client-project', 'BoqController@getClientProject')->name('admin.boq.getClientProject');
-});
+// 	Route::post('/get-new-item', 'BoqController@getNewItem')->name('admin.boq.getNewItem');
+// 	Route::post('/get-product-variation', 'BoqController@getProductVariation')->name('admin.boq.getProductVariation');
+// 	Route::post('/get-unit', 'BoqController@getUnit')->name('admin.boq.getUnit');
+// 	Route::post('/view-product', 'BoqController@viewProduct')->name('admin.boq.viewproduct');
+// 	Route::post('/boq-name', 'BoqController@boqName')->name('admin.boq.boqName');
+// 	Route::post('/get-client-project', 'BoqController@getClientProject')->name('admin.boq.getClientProject');
+// });
 
-Route::group(['prefix' => 'transaction'], function () {
-	Route::get('/list', 'TransactionController@index')->name('admin.transaction.index');
-});
+// Route::group(['prefix' => 'transaction'], function () {
+// 	Route::get('/list', 'TransactionController@index')->name('admin.transaction.index');
+// });
 
 Route::group(['prefix' => 'credit'], function () {
 	Route::get('/list', 'CreditController@index')->name('admin.credit.index');
 	Route::get('/view-form/{id}', 'CreditController@viewCreditForm')->name('admin.credit.viewCreditForm');
 	Route::get('/download-credit-document/{id}', 'CreditController@downloadCreditDocument')->name('admin.credit.download-credit-document');
+	Route::get('/approve/{id}', 'CreditController@approve')->name('admin.credit.approve');
+	Route::get('/reject/{id}', 'CreditController@reject')->name('admin.credit.reject');
 });

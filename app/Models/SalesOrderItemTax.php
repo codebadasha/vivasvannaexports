@@ -35,6 +35,6 @@ class SalesOrderItemTax extends Model
     
     public function item()
     {
-        return $this->belongsTo(SalesOrderItem::class, 'sales_order_item_id');
+        return $this->belongsTo(SalesOrderItem::class);
     }
 }

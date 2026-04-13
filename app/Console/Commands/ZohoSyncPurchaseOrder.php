@@ -37,6 +37,7 @@ class ZohoSyncPurchaseOrder extends Command
             $response = $zoho->getAllPurchaseorders([
                 'page' => $page,
                 'per_page' => $perPage,
+                'sort_order' => "A"
             ]);
             
             $purchaseOrders = $response['purchaseorders'] ?? [];
@@ -50,7 +51,6 @@ class ZohoSyncPurchaseOrder extends Command
                 $poDetails = $detailsResp['purchaseorder'] ?? [];
                 // dd($soDetails);
                 if (empty($poDetails)) continue;
-                $poDetails['company_name'] = $order['company_name'];
                 
                 PurchaseOrder::upsertFromZoho($poDetails);
                 $total++;

@@ -38,22 +38,11 @@ class AppServiceProvider extends ServiceProvider
                 if(!is_null($checkPermission)){
                     foreach($checkPermission as $pk => $pv){
                         $module[] = $pv->moduleName->slug;
-                        $selectedAction[$pv->moduleName->slug] = explode(',',$pv->action);
+                        $selectedAction[$pv->moduleName->slug] = explode(',', $pv->action);
                     }
                 }
-
                 View::share('module',$module);
                 View::share('selectedAction',$selectedAction);
-            }
-
-            /**
-             * Investor client id
-             */
-            if (Auth::guard('investor')->user()) {
-
-                $investorClient = ClientInvestor::where('investor_id',Auth::guard('investor')->user()->id)->pluck('client_id')->toArray();
-
-                View::share('investorClient',$investorClient);
             }
 
         });

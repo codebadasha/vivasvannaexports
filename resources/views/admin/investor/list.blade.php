@@ -1,6 +1,9 @@
 @extends('layouts.admin')
 @section('title','All Investor')
 @section('content')
+@php
+    $showActionColumn = !empty(array_intersect(['edit','delete'], $selectedAction['investor']));
+@endphp
 <div class="page-content">
     <div class="container-fluid">
         <!-- start page title -->
@@ -38,7 +41,9 @@
                                     <th>Investor Name</th>
                                     <th>Mobile Number</th>
                                     <th>Email ID</th>
+                                    @if($showActionColumn)
                                     <th class='notexport'>Actions</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -49,6 +54,7 @@
                                         <td>{{ $ov->name }}</td>
                                         <td>{{ $ov->mobile }}</td>
                                         <td>{{ $ov->email }}</td>
+                                        @if($showActionColumn)
                                         <td>
                                             @if(array_key_exists('investor',$selectedAction) && in_array('edit',$selectedAction['investor']))
                                                 <a class="btn btn-primary waves-effect waves-light" href="{{ route('admin.investor.edit',base64_encode($ov->id)) }}" role="button">
@@ -61,6 +67,7 @@
                                                 </a>
                                             @endif
                                         </td>
+                                        @endif
                                     </tr>
                                 @endforeach
                             @endif

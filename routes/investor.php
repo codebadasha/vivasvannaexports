@@ -6,9 +6,9 @@
 	Route::get('logout/{id?}', 'Auth\LoginController@logout')->name('investor.logout');
 
 	//forget and reset password
-	Route::get('password/reset', 'Auth\ForgotPasswordController@showLinkRequestForm')->name('investor.auth.password.reset');
+	Route::get('password/forgot', 'Auth\ForgotPasswordController@showLinkRequestForm')->name('investor.auth.password.reset');
+	Route::get('password/reset/{token?}', 'Auth\ResetPasswordController@showResetForm')->name('password.reset');
 	Route::post('password/email', 'Auth\ForgotPasswordController@sendResetLinkEmail')->name('investor.passwordemail');
-	Route::get('password/reset/{token?}', 'Auth\ResetPasswordController@showResetForm')->name('investor.auth.password.reset');
 	Route::post('password/reset', 'Auth\ResetPasswordController@reset')->name('investor.resetpassword');
 
 	//Dashboard Route....
@@ -41,10 +41,10 @@
 
 	Route::group(['prefix' => 'po'], function () {
 		Route::get('/view-po-details/{id}', 'PurchaseOrderController@view')->name('investor.po.viewpo');
+		Route::get('/list', 'PurchaseOrderController@index')->name('investor.po.index');
 		Route::get('/view-invoice/{id}', 'PurchaseOrderController@viewinvoice')->name('investor.po.viewinvoice');
 		Route::get('/invoice-download/{id}', 'PurchaseOrderController@invoicedownload')->name('investor.po.invoicedownload');
 		Route::get('/purchase-order-download/{id}', 'PurchaseOrderController@download')->name('investor.po.download');
-		Route::get('/list', 'PurchaseOrderController@index')->name('investor.po.index');
 		Route::get('/create', 'PurchaseOrderController@create')->name('investor.po.create');
 		Route::post('/store', 'PurchaseOrderController@store')->name('investor.po.store');
 		Route::get('/edit/{id}', 'PurchaseOrderController@edit')->name('investor.po.edit');
@@ -61,7 +61,7 @@
 		Route::post('/get-boq', 'PurchaseOrderController@getBoq')->name('investor.po.getBoq');
 		Route::post('/get-boq-item', 'PurchaseOrderController@getBoqItem')->name('investor.po.getBoqItem');
 
-		
+		Route::post('/open-document', 'PurchaseOrderController@openDocument')->name('investor.po.openDocument');
 	});
 
 	Route::group(['prefix' => 'invoice'], function () {
@@ -72,5 +72,7 @@
 		Route::post('/update', 'PurchaseOrderController@saveEditedInvoice')->name('investor.po.saveEditedInvoice');
 		Route::get('/delete/{id}', 'PurchaseOrderController@deleteInvoice')->name('investor.po.deleteInvoice');
 		Route::get('/download-invoice-document-zip/{id}', 'PurchaseOrderController@downloadInvoiceDocumentZip')->name('investor.po.downloadInvoiceDocumentZip');
-		Route::get('/all', 'PurchaseOrderController@allInvoice')->name('investor.invoice.index');
+		Route::get('/list', 'PurchaseOrderController@allInvoice')->name('investor.invoice.index');
+		Route::get('/ewaybill/{id}', 'PurchaseOrderController@viewEwayBill')->name('investor.invoice.ewaybill');
+		Route::get('/download-zip/{id}', 'PurchaseOrderController@downloadInvoiceZip')->name('investor.so.invoicezip');
 	});

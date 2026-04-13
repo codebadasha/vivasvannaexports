@@ -6,8 +6,11 @@ use App\Helpers\DefaultResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Admin;
+use App\Models\Role;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use App\Jobs\ZohoUserSyncJob;
+
 
 class TeamController extends Controller
 {
@@ -21,10 +24,10 @@ class TeamController extends Controller
         try {
             $filter = 0;
 
-            $query = Admin::where('is_delete', 0);
+            $query = Admin::select(['id','name','user_role','mobile','email', 'is_active'])->where('is_delete', 0)->whereNot('user_role', 'Super Admin');
 
             // ✅ Only filter if status is actually passed
-            if ($request->has('status') && $request->status !== '' && $request->status !== 'all') {
+            if (isset($request->status)) {
                 if($request->status != 'all'){
                     $filter = 1;
                     $status = $request->status == 2 ? 0 : 1;
@@ -37,9 +40,10 @@ class TeamController extends Controller
                 $query->where('role_id', $request->role_id);
             }
 
-            $members = $query->with(['role'])->get();
+            $members = $query->get();
+            $roles = Role::select(['id','name'])->whereNot('name', 'Super Admin')->where('is_delete',0)->get();
 
-            return view('admin.team.list', compact('members', 'filter'));
+            return view('admin.team.list', compact('members', 'roles', 'filter'));
         } catch (\Exception $e) {
             Log::error('Error in TeamController@index: ' . $e->getMessage());
             return redirect()->back()->withErrors('Something went wrong while fetching team members.');
@@ -238,5 +242,16 @@ class TeamController extends Controller
         $email = $query->first();
 
         return $email ? 'false' : 'true';
+    }
+    
+    public function syncZohoUsers()
+    {
+        ZohoUserSyncJob::dispatch();
+
+        return back()->with('messages', [[
+                'type' => 'success',
+                'title' => 'Team',
+                'message' => 'zoho User Sync Started in Background',
+            ]]);
     }
 }

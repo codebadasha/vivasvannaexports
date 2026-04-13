@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Validator;
 use App\Models\ClientInvestor;
+use App\Models\Project;
+use App\Models\SalesOrderInvoice;
+use App\Models\SalesOrder;
+use App\Models\Investor;
 use App\Models\SalesOrderItem;
 
 class InvestorController extends GlobalController
@@ -22,13 +26,7 @@ class InvestorController extends GlobalController
 
     public function __construct()
     {
-
         $this->middleware('investor');
-
-        if (Auth::guard('investor')->user()) {
-            $invClient = ClientInvestor::where('investor_id', Auth::guard('investor')->user()->id)->pluck('client_id')->toArray();
-            $this->investorclient = $invClient;
-        }
     }
 
     /**
@@ -38,79 +36,68 @@ class InvestorController extends GlobalController
      **/
     public function index()
     {
-        // 1. Filter invoices by logged-in client's zoho_contact_id via SalesOrder
-        $investor = Auth::guard('investor')->user()->id;
 
-        $invoices = \App\Models\SalesOrderInvoice::with(['salesOrder'])
-            ->whereHas('salesOrder', function ($q) use ($investor) {
-                $q->where('investor_id', $investor);
+        $investorId = Auth::guard('investor')->id();
+
+        $items = SalesOrderItem::query()
+            ->with([
+                'salesOrder' => function ($q) {
+                    $q->select(
+                        'id',
+                        'zoho_salesorder_id',
+                        'salesorder_number',
+                        'project_id',
+                        'customer_id',
+                        'company_name'
+                    )->with([
+                        'project' => fn($q) => $q->select('id', 'name'),
+                        'invoices' => fn($q) => $q->select('id', 'sales_order_id')
+                            ->with([
+                                'items' => fn($q) => $q->select(
+                                    'id',
+                                    'invoice_id',
+                                    'item_id',
+                                    'quantity'
+                                )
+                            ])
+                    ]);
+                }
+            ])
+            ->whereHas('salesOrder.investors', function ($q) use ($investorId) {
+                $q->where('investor_id', $investorId);
             })
-            ->whereNotIn('status', ['draft', 'void', 'viewed'])
-            ->orderBy('id', 'desc')
+            ->orderByDesc('id')
             ->get();
+   
+        $data = [
+            'total_projects' => Project::where('is_active', 1)
+                ->where('is_delete', 0)
+                ->count(),
 
-        $projectCount = $invoices
-            ->pluck('salesOrder.project_id')
-            ->filter()
-            ->unique()
-            ->count();
+            'total_po_count' => SalesOrder::count(),
 
-        $PoAmount = $invoices
-            ->pluck('salesOrder')          // get all related sales orders
-            ->unique('id')                 // keep only unique sales orders
-            ->pluck('total')               // extract `total`
-            ->sum();
+            'total_po_amount' => SalesOrder::sum('total'),
 
-        $invoiceAmount = $invoices->pluck('total')->sum();
+            'total_invoice_count' => SalesOrderInvoice::whereNotIn('status', ['draft','void','viewed'])->count(),
 
-        $invoicePaidCount = $invoices
-            ->where('status', 'paid')
-            ->count();
+            'total_invoice_amount' => SalesOrderInvoice::whereNotIn('status', ['draft','void','viewed'])->sum('total'),
+            
+            'total_assigned_invoice_count' => SalesOrderInvoice::where('investor_id', $investorId)->whereNotIn('status', ['draft','void','viewed'])->count(),
 
-        $invoicePaidAmount = $invoices
-            ->where('status', 'paid')
-            ->pluck('total')
-            ->sum();
+            'total_assigned_invoice_amount' => SalesOrderInvoice::where('investor_id', $investorId)->whereNotIn('status', ['draft','void','viewed'])->sum('total'),
 
-        $invoiceOverdueAmount = $invoices
-            ->where('status', 'overdue')
-            ->pluck('total')
-            ->sum();
+            'paid_invoice_count' => SalesOrderInvoice::where('investor_id', $investorId)->whereNotIn('status', ['draft','void','viewed'])->where('status','paid')->count(),
 
-        $clients = $this->investorclient;
+            'paid_invoice_amount' => SalesOrderInvoice::where('investor_id', $investorId)->whereNotIn('status', ['draft','void','viewed'])->where('status','paid')->sum('total'),
 
-        $projectCount = $invoices
-            ->pluck('salesOrder.project_id')
-            ->filter()
-            ->unique()
-            ->count();
+            'overdue_invoice_count' => SalesOrderInvoice::where('investor_id', $investorId)->whereNotIn('status', ['draft','void','viewed'])->where('status','overdue')->count(),
 
-        $invoiceOrderIds = $invoices
-            ->pluck('salesorder_id')
-            ->unique()
-            ->toArray();
-
-        $detail = SalesOrderItem::with([
-            'salesOrder.project',
-            'salesOrder.client',
-            'product'
-        ])
-            ->whereIn('sales_order_id', $invoiceOrderIds)
-            ->orderBy('id', 'desc')
-            ->get();
+            'overdue_invoice_amount' => SalesOrderInvoice::where('investor_id', $investorId)->whereNotIn('status', ['draft','void','viewed'])->where('status','overdue')->sum('total'),
+        ];
 
         return view(
             'investor.dashboard.dashboard',
-            compact(
-                'projectCount',
-                'PoAmount',
-                'invoiceAmount',
-                'invoicePaidCount',
-                'invoicePaidAmount',
-                'invoiceOverdueAmount',
-                'clients',
-                'detail'
-            )
+            compact('data','items')
         );
     }
 
@@ -123,10 +110,9 @@ class InvestorController extends GlobalController
      **/
     public function editProfile()
     {
+        $profile = Investor::where('id', Auth::guard('investor')->user()->id)->first();
 
-        $profile = Admin::where('id', Auth::guard('admin')->user()->id)->first();
-
-        return view('admin.dashboard.edit_profile', compact('profile'));
+        return view('investor.dashboard.edit_profile', compact('profile'));
     }
 
     /**
@@ -139,7 +125,7 @@ class InvestorController extends GlobalController
     public function updateProfile(Request $request)
     {
 
-        $update = Admin::findOrFail(Auth::guard('admin')->user()->id);
+        $update = Investor::findOrFail(Auth::guard('investor')->user()->id);
         $update->name = $request->name;
         $update->email = $request->email;
         $update->mobile = $request->mobile_number;
@@ -149,7 +135,7 @@ class InvestorController extends GlobalController
         }*/
         $update->save();
 
-        return redirect(route('admin.dashboard'))->with('messages', [
+        return redirect(route('investor.dashboard'))->with('messages', [
             [
                 'type' => 'success',
                 'title' => 'Profile',
@@ -163,10 +149,9 @@ class InvestorController extends GlobalController
      *
      * @return to change admin password page
      **/
-    public function changeAdminPassword()
+    public function changeinvestorPassword()
     {
-
-        return view('admin.dashboard.change_password');
+        return view('investor.dashboard.change_password');
     }
 
     /**
@@ -176,7 +161,7 @@ class InvestorController extends GlobalController
      *
      * @return to index page with data store in Admin database
      **/
-    public function updateAdminPassword(Request $request)
+    public function updateinvestorPassword(Request $request)
     {
 
         $this->validate($request, [
@@ -184,25 +169,34 @@ class InvestorController extends GlobalController
             'new_password' => 'required'
         ]);
 
-        $adminId = Auth::guard('admin')->user()->id;
-        $user = Admin::where('id', '=', $adminId)->first();
+        $user = Investor::where('id', '=', Auth::guard('investor')->user()->id)->first();
 
         if (Hash::check($request->old_password, $user->password)) {
 
-            $users = Admin::findOrFail($adminId);
-            $users->password = Hash::make($request->new_password);
-            $users->save();
+            if ($request->new_password === $request->confirm_password) {
 
-            return redirect(route('admin.dashboard'))->with('messages', [
-                [
-                    'type' => 'success',
-                    'title' => 'Password',
-                    'message' => 'Password Successfully changed',
-                ],
-            ]);
+                $user->password = Hash::make($request->new_password);
+                $user->save();
+
+                return redirect(route('investor.dashboard'))->with('messages', [
+                    [
+                        'type' => 'success',
+                        'title' => 'Password',
+                        'message' => 'Password Successfully changed',
+                    ],
+                ]);
+            } else {
+                return redirect()->back()->with('messages', [
+                    [
+                        'type' => 'error',
+                        'title' => 'Password Mismatch',
+                        'message' => 'The new password and confirm password do not match. Please try again.',
+                    ],
+                ]);
+            }
         } else {
 
-            return redirect(route('admin.changeAdminPassword'))->with('messages', [
+            return redirect()->back()->with('messages', [
                 [
                     'type' => 'error',
                     'title' => 'Password',

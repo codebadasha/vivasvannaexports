@@ -31,7 +31,9 @@
                                 <tr>
                                     <th>Sr. No</th>
                                     <th>Name</th>
+                                    @if(array_key_exists('policy',$selectedAction) && in_array('edit',$selectedAction['policy']))
                                     <th class='notexport'>Actions</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -40,12 +42,12 @@
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $gv->title }}</td>
-                                        <td>
-                                            @if(array_key_exists('policy',$selectedAction) && in_array('edit',$selectedAction['policy']))
+                                        @if(array_key_exists('policy',$selectedAction) && in_array('edit',$selectedAction['policy']))
+                                            <td>
                                                 <a class="btn btn-primary waves-effect waves-light" href="{{route('admin.editPolicy',$gv->key)}}" role="button">Edit
                                                 </a>
-                                            @endif
-                                        </td>
+                                            </td>
+                                        @endif
                                     </tr>
                                 @endforeach
                             @endif

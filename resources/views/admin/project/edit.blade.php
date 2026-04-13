@@ -29,24 +29,45 @@
 
                             <div class="form-group mb-3">
                                 <label>Select Client<span class="mandatory">*</span></label>
-                                <select class="form-control select2" name="client_id" required>
+                                <input type="hidden" name="zoho_client_id" id="zoho_client_id" value="{{ old('zoho_client_id', $detail->zoho_client_id) }}">
+                                <select class="form-control select2 @error('client_id') is-invalid @enderror" name="client_id" id="client_id" required>
                                     <option value="">Select Client</option>
-                                    @forelse(\App\Models\ClientCompany::where('is_active',1)->where('is_delete',0)->get() as $sk => $sv)
-                                        <option value="{{ $sv->id }}" {{ $sv->id == $detail->client_id ? 'selected' : '' }}>{{ $sv->company_name }}</option>
-                                    @empty
-                                        <option value="">No Data Found</option>
-                                    @endforelse
+
+                                    @foreach($clients as $sv)
+                                        <option value="{{ $sv->id }}"
+                                            data-id="{{ $sv->zoho_contact_id }}"
+                                            {{ old('client_id', $detail->client_id) == $sv->id ? 'selected' : '' }}>
+                                            {{ $sv->company_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('client_id')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label>Name<span class="mandatory">*</span></label>
+                                <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name', $detail->name) }}" required>
+                                 @error('name')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label>Select SalesOrders</label>
+                                <select name="salesorders[]" id="salesorders" class="form-control select2" required multiple>
+                                    <option value="">-- Select SalesOrder --</option>
+                                    @foreach($so as $val)
+                                    @continue($val->customer_id != $detail->zoho_client_id)
+                                    <option value="{{ $val->id }}" {{ $val->project_id == $detail->id ? 'selected' : ''}}>{{ $val->salesorder_number }}</option>
+                                    @endforeach
                                 </select>
                             </div>
 
                             <div class="form-group mb-3">
-                                <label>Name <span class="mandatory">*</span></label>
-                                <input type="text" name="name" class="form-control" id="name" placeholder="Name" value="{{ $detail->name }}" required>
-                            </div>
-
-                            <div class="form-group mb-3">
                                 <label>Description </label>
-                                <textarea name="description" class="form-control" id="description" placeholder="Description">{{ $detail->description }}</textarea>
+                                <textarea name="description" class="form-control">{{ old('description', $detail->description) }}</textarea>
                             </div>
 
                             <div class="button-items">
@@ -66,4 +87,58 @@
         </form>
     </div>
 </div>
+@endsection
+
+@section('js')
+<script>
+    const salesOrdersData = @json($so);
+    const detail = @json($detail);
+    console.log(detail)
+</script>
+<script type="text/javascript">
+    $(document).ready(function() {
+        
+        
+        $(document).on('change', '#client_id', function () {
+
+            $('#salesorders').prop('disabled', true);
+            const selectedOption = $(this).find(':selected');
+            const zohoClientId = selectedOption.data('id');
+        
+            const clientId = $(this).val();
+
+            // Set hidden field
+            $('#zoho_client_id').val(zohoClientId);
+
+            // Enable salesorder dropdown
+            $('#salesorders').prop('disabled', false);
+            $('#salesorders').val('').trigger('change');
+            // Clear existing options
+            $('#salesorders').empty();
+
+            // Add default option
+            $('#salesorders').append('<option value="">-- Select SalesOrder --</option>');
+
+            // Loop through JS salesOrdersData
+            salesOrdersData.forEach(function (so) {
+
+                // Match customer_id with zoho_client_id
+                if (so.customer_id == zohoClientId) {
+                    let selected = '';
+                    if(so.project_id == detail.id){
+                        selected = 'selected';
+                    }
+                    $('#salesorders').append(
+                        `<option value="${so.id}" ${selected}>
+                            ${so.salesorder_number}
+                        </option>`
+                    );
+                }
+            });
+
+            // Refresh Select2
+            
+        });
+    });
+</script>
 @endsection

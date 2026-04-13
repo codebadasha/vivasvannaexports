@@ -39,22 +39,19 @@
                                 </tr>
                             </thead>
                             <tbody>
-                            @if(!is_null($client))
-                                @foreach($client as $ok => $ov)
+                            @if(!is_null($clients))
+                                @foreach($clients as $ok => $ov)
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $ov->company_name }}</td>
                                         <td>{{ $ov->address }}</td>
-                                        <td>{{ $ov->director_name }}</td>
+                                        <td>{{ $ov->director_name ?? '---' }}</td>
                                         <td>{{ $ov->gstn }}</td>
                                         <td>{{ $ov->pan_number }}</td>
                                         <td>
-                                            <!-- <a class="btn btn-success waves-effect waves-light" href="{{ route('investor.client.clientDashboard',base64_encode($ov->id)) }}" role="button" title="Dashboard" target="_blank">
+                                            <a class="btn btn-success waves-effect waves-light" href="{{ route('investor.client.clientDashboard',base64_encode($ov->id)) }}" role="button" title="Dashboard" target="_blank">
                                                 Dashboard    
                                             </a>
-                                            <a class="btn btn-secondary waves-effect waves-light" href="{{ route('investor.client.downloadCompanyDocumentZip',base64_encode($ov->id)) }}" role="button" title="Edit">
-                                                Download    
-                                            </a> -->
                                             <a href="javascript:void(0);" class="btn btn-info authorizedPerson" data-id="{{ $ov->id }}">
                                                 Users
                                             </a>

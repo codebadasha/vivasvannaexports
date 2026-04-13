@@ -5,19 +5,23 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\GlobalController;
 use Illuminate\Http\Request;
+use App\Jobs\SendOtherInvestorsOpportunityMailJob;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderInvoice;
 use App\Models\ProductVariation;
 use App\Models\PurchaseOrderItem;
 use App\Models\SupplierCompany;
+use App\Models\ClientCompany;
 use App\Models\ItemQty;
 use App\Models\Project;
 use App\Models\Boq;
 use App\Models\BoqItem;
+use App\Helpers\MailHelper;
 use App\Models\Transaction;
 use App\Models\Ponote;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderInvoice;
+use App\Models\Investor;
 use App\Services\ZohoBookService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -25,6 +29,8 @@ use ZipArchive;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response;
+use App\Helpers\DefaultResponse;
+use Illuminate\Support\Facades\Auth;
 
 class SalesOrdersController extends GlobalController
 {
@@ -37,12 +43,29 @@ class SalesOrdersController extends GlobalController
     {
 
         $filter = 0;
+        $query = SalesOrder::select('id','project_id','date','customer_id','salesorder_number','reference_number','customer_name','current_sub_status','invoiced_status','paid_status','total_invoiced_amount','total','shipment_date','zoho_salesorder_id')->with([
+            'project' => function ($q) {$q->select('id','name');}, 
+            'documents' => function ($q) {$q->select('sales_order_id','document_id','file_type','file_name');}
+            ]);
+        
+        $user = Auth::guard('admin')->user();
+        if(!in_array($user->user_role, ['Super Admin','admin'])){
+            $query->where('created_by_id',$user->zoho_user_id);
+        }
 
-        $query = SalesOrder::with(['project', 'client']);
+        if (isset($request->order_number) && $request->order_number != '') {
+            $filter = 1;
+            $query->where('salesorder_number', 'LIKE', '%' . $request->order_number . '%');
+        }
 
         if(isset($request->client) && $request->client != ''){
             $filter = 1;
             $query->where('customer_id',$request->client);
+        }
+
+        $client = null;
+        if(isset($request->from_client) && $request->from_client !=''){
+            $client = ClientCompany::select('id', 'company_name')->where('zoho_contact_id', $request->client)->first();   // or whatever your model name is
         }
 
         if(isset($request->project) && $request->project != ''){
@@ -52,27 +75,40 @@ class SalesOrdersController extends GlobalController
 
         if(isset($request->po_start_date) && $request->po_start_date != ''){
             $filter = 1;
-            $query->whereBetween(DB::raw('date(date)'),[date('Y-m-d',strtotime(str_replace('/','-',trim($request->po_start_date)))),date('Y-m-d',strtotime(str_replace('/','-',trim($request->po_end_date))))]);
+            $query->whereBetween('date', [
+                date('Y-m-d', strtotime(str_replace('/', '-', trim($request->po_start_date)))),
+                date('Y-m-d', strtotime(str_replace('/', '-', trim($request->po_end_date))))
+            ]);
+        }
+        
+        $so = $query->orderByDesc('id')->get();
+
+        $clientquery = ClientCompany::select('zoho_contact_id','company_name');  
+        $projectQuery = Project::select('id','name','client_id','zoho_client_id');
+
+        if (!in_array($user->user_role, ['Super Admin', 'admin'])) {
+            $clientquery->where('admin_id', $user->id);
+            $projectQuery->whereHas('client', fn($q) => $q->where('admin_id', $user->role_id));
         }
 
-        // if(isset($request->boq_id) && $request->boq_id != ''){
-        //     $query->whereHas('item',function($q) use ($request){
-        //         $q->where('boq_item_id',base64_decode($request->boq_id));
-        //     });
-        // }
+        $clients = $clientquery->get();
+        $projects = $projectQuery->get();
 
-        $so = $query->orderBy('id', 'desc')->get();
-
-        return view('admin.so.list', compact('so', 'filter'));
+        return view('admin.so.list', compact('so', 'filter', 'clients', 'client', 'projects'));
     }
 
     public function view(ZohoBookService $zohoBook, $id)
     {
-        $html = $zohoBook->getSalesOrderHtml(base64_decode($id));
-        $invoice = SalesOrderInvoice::with(['ewaybill','investor'])
-            ->where('salesorder_id', base64_decode($id))
+        $id = base64_decode($id);
+        // dd($id);
+        $salesOrder = Salesorder::select('zoho_salesorder_id')
+        ->where('id', $id)
+        ->first();
+        $html = $zohoBook->getSalesOrderHtml($salesOrder->zoho_salesorder_id);
+        $invoice = SalesOrderInvoice::with(['investor', 'documents', 'ewayBills'])
+            ->where('sales_order_id', $id)
             ->whereNotIn('status', ['draft', 'void', 'viewed'])->get();
-        // dd($invoice);exit;
+
         return view('admin.so.view_detail', compact('html', 'invoice'));
     }
 
@@ -124,55 +160,130 @@ class SalesOrdersController extends GlobalController
         }
     }
 
+    public function viewEwayBill(ZohoBookService $zohoBook, $id)
+    {
+        try {
+
+            $ewayBillId = base64_decode($id);
+            $pdfContent = $zohoBook->getEwayBillPdf($ewayBillId);
+
+            $fileName = "ewaybill_{$ewayBillId}.pdf";
+
+            return response($pdfContent, 200)
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', "attachment; filename={$fileName}");
+        } catch (\Exception $e) {
+            Log::error('Invoice PDF download failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to download PDF'], 500);
+        }
+    }
+
     public function assignProject(Request $request)
     {
         $request->validate([
-            'so_id' => 'required',
-            'project_id' => 'required|exists:projects,id',
+            'salesorders'     => 'required|array',
+            'salesorders.*'   => 'exists:sales_orders,id',
+            'project_id'  => 'required|exists:projects,id',
         ]);
 
         try {
-            $salesOrder = SalesOrder::where('salesorder_id', base64_decode($request->so_id))->first();
+            SalesOrder::where('project_id', $request->project_id)
+                        ->update([
+                            'project_id' => null
+                        ]);
 
-            if (!$salesOrder) {
-                return response()->json(['success' => false, 'message' => 'Sales Order not found.']);
-            }
+            SalesOrder::whereIn('id', $request->salesorders)
+                ->update([
+                    'project_id' => $request->project_id
+                ]);
+            $message['type'] = 'success';
+            return response()->json(DefaultResponse::success(null, 'Project assigned successfully'));
 
-            $salesOrder->project_id = $request->project_id;
-            $salesOrder->save();
-
-            return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ]);
+            return response()->json(DefaultResponse::error('Somthing wrong, please try again'));
         }
+       
     }
 
     public function assignInvestor(Request $request)
     {
         $request->validate([
-            'invoice_id' => 'required',
-            'investor_id' => 'required|exists:investors,id',
+            'invoices'     => 'required|array',
+            'invoices.*'   => 'exists:sales_order_invoices,id',
+            'investor_id'  => 'required|exists:investors,id',
         ]);
 
         try {
-            $invoice = SalesOrderInvoice::where('invoice_id', base64_decode($request->invoice_id))->first();
+            
+            SalesOrderInvoice::whereIn('id', $request->invoices)
+                ->update([
+                    'investor_id' => $request->investor_id
+            ]);
+            
+           $invoices = SalesOrderInvoice::select(
+                    'invoice_number',
+                    'customer_name',
+                    'due_date',
+                    'total'
+                )->whereIn('id', $request->invoices)->get();
 
-            if (!$invoice) {
-                return response()->json(['success' => false, 'message' => 'Invoice Order not found.']);
+            $mailInvoices = [];
+            $totalAmount = 0;
+
+            foreach ($invoices as $invoice) {
+
+                $mailInvoices[] = [
+                    'invoice_number' => $invoice->invoice_number,
+                    'client_name'    => $invoice->customer_name,
+                    'due_date'       => $invoice->due_date,
+                    'total_amount'   => $invoice->total,
+                ];
+
+                $totalAmount += $invoice->total;
             }
 
-            $invoice->investor_id = $request->investor_id;
-            $invoice->save();
+            $investor = Investor::where('id', $request->investor_id);
+            try {
 
-            return response()->json(['success' => true]);
+                $subject = count($mailInvoices) . " New Invoice(s) Assigned to You";
+                $viewFile = 'mail-template.investor-invoice-notification';
+                $data = [
+                    'invoices'     => $mailInvoices,
+                    'total_amount' => $totalAmount,
+                ];
+
+                $response = MailHelper::send(
+                    $investor->email,
+                    $subject,
+                    $viewFile,
+                    $data
+                );
+
+                if (!$response['status']) {
+                    Log::error("Investor bulk invoice mail failed: " . $response['message']);
+                } else {
+                    Log::info("Investor bulk invoice mail sent to {$investor->email}");
+                }
+
+            } catch (\Throwable $e) {
+                Log::error("Investor bulk invoice mail exception: " . $e->getMessage());
+            }
+
+            $otherInvestors = Investor::whereNot('id', $request->investor_id)
+            ->whereNotNull('email')
+            ->where('is_delete', 0)
+            ->where('is_active', 1)
+            ->get();
+
+            if ($otherInvestors->count() > 0) {
+                SendOtherInvestorsOpportunityMailJob::dispatch($mailInvoices, $otherInvestors);
+            }
+
+            $message['type'] = 'success';
+            return response()->json(DefaultResponse::success(null, 'Investor assigned successfully'));
+
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ]);
+            return response()->json(DefaultResponse::error('Somthing wrong, please try again'));
         }
     }
 
@@ -181,20 +292,28 @@ class SalesOrdersController extends GlobalController
 
         $filter = 0;
 
-        $query = SalesOrderInvoice::with(['salesOrder', 'investor']);
+        $query = SalesOrderInvoice::select('id','customer_name','invoice_number','reference_number','status','due_date','total','balance','invoice_id','date')->with([
+            'investor' => function ($q) {$q->select('id','name');}, 
+            'documents' => function ($q) {$q->select('invoice_id','document_id','file_type','file_name');}, 
+            'ewayBills'  => function ($q) {$q->select('invoice_id','ewaybill_id','ewaybill_number');},
+        ]);
+        
+        $user = Auth::guard('admin')->user();
+        $clientquery = ClientCompany::select('zoho_contact_id','company_name');
+        $soQuery = SalesOrder::select('id','salesorder_number');
+            
+        if(!in_array($user->user_role, ['Super Admin','admin'])){
+            $query->where('created_by_id',$user->zoho_user_id);
+            $clientquery->where('admin_id', $user->id);
+            $soQuery->where('created_by_id',$user->zoho_user_id);
+        }
+
+        $so = $soQuery->orderByDesc('id')->get();
+        $clients = $clientquery->get();
 
         if (isset($request->due_start_date) && $request->due_start_date != '') {
             $filter = 1;
             $query->whereBetween('due_date', [date('Y-m-d', strtotime(str_replace('/', '-', trim($request->due_start_date)))), date('Y-m-d', strtotime(str_replace('/', '-', trim($request->due_end_date))))]);
-        }
-
-        if (isset($request->status) && $request->status != '') {
-            $filter = 1;
-            if ($request->status == 1) {
-                $query->where('status', 'paid');
-            } else {
-                $query->where('status', '!=', 'paid');
-            }
         }
 
         if (isset($request->invoice_number) && $request->invoice_number != '') {
@@ -202,11 +321,29 @@ class SalesOrdersController extends GlobalController
             $query->where('invoice_number', 'LIKE', '%' . $request->invoice_number . '%');
         }
 
+        if (isset($request->order) && $request->order != '') {
+            $filter = 1;
+            $query->where('sales_order_id', $request->order);
+        }
+
+        if (isset($request->status) && $request->status != '') {
+            $filter = 1;
+            if ($request->status == 1) {
+                $query->where('status', 'paid');
+            }elseif ($request->status == 3) {
+                $query->where('status', 'overdue');
+            } else {
+                $query->where('status', '!=', 'paid');
+            }
+        }else {
+            $query->whereNotIn('status', ['draft','void','viewed']);
+        }
+
         if (isset($request->investor) && $request->investor != '') {
             $filter = 1;
             $query->where('investor_id', $request->investor);
         }
-
+            
         if (isset($request->fin_year) && $request->fin_year != '') {
             $filter = 1;
             $explode = explode('-', $request->fin_year);
@@ -215,14 +352,203 @@ class SalesOrdersController extends GlobalController
             $query->whereBetween('date', [$start, $end]);
         }
 
-        $invoice = $query->whereNotIn('status', ['draft', 'void', 'viewed'])->orderBy('id', 'desc')->get();
+        if(isset($request->client) && $request->client != ''){
+            $filter = 1;
+            $query->where('customer_id',$request->client);
+        }
 
-        return view('admin.invoice.all_invoice', compact('invoice', 'filter'));
+        $client = null;
+        if(isset($request->from_client) && $request->from_client !=''){
+            $client = ClientCompany::select('id', 'company_name')->where('zoho_contact_id', $request->client)->first();   // or whatever your model name is
+        }
+
+        $sumQuery = clone $query;
+
+        $invoice = $query->whereNotIn('status', ['draft', 'void', 'viewed'])->orderByDesc('id')->get();
+
+        $salesOrderIds = $invoice
+        ->pluck('sales_order_id')
+        ->unique()
+        ->toArray();
+
+        $totalInvoiceCount = $sumQuery->count();
+        $totalInvoiceAmount = $sumQuery->sum('total');
+        $paidInvoiceCount = $sumQuery->where('status', 'paid')->count();
+        $paidInvoiceAmount = $sumQuery->where('status', 'paid')->sum('total');
+
+        if($filter == 1){
+            $totalSoCount = SalesOrder::whereIn('id', $salesOrderIds)->count();
+            $totalSoAmount = SalesOrder::whereIn('id', $salesOrderIds)->sum('total');
+        }else{
+            $totalSoCount = SalesOrder::count();
+            $totalSoAmount = SalesOrder::sum('total');
+        }
+
+        $data = [
+            'total_so_count' => $totalSoCount,
+            'total_so_amount' => $totalSoAmount,
+            'total_invoice_count' => $totalInvoiceCount,
+            'total_invoice_amount' => $totalInvoiceAmount,
+            'paid_invoice_count' => $paidInvoiceCount,
+            'paid_invoice_amount' => $paidInvoiceAmount
+        ];
+
+        
+        return view('admin.invoice.all_invoice', compact(
+            'invoice',
+            'filter',
+            'data','clients','client','so'
+        ));
+    }
+
+    public function downloadInvoiceZip(ZohoBookService $zohoBook, $id)
+    {
+        try {
+            $invoiceId = base64_decode($id);
+
+            $invoice = SalesOrderInvoice::with([
+                'documents' => function ($q) {
+                    $q->select('invoice_id', 'document_id', 'file_type', 'file_name');
+                },
+                'ewayBills' => function ($q) {
+                    $q->select('invoice_id', 'ewaybill_id', 'ewaybill_number');
+                }
+            ])->where('invoice_id', $invoiceId)->first();
+
+            if (!$invoice) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Invoice not found.'
+                ], 404);
+            }
+
+            $invoiceNumber = $invoice->invoice_number ?? ('invoice_' . $invoiceId);
+            $safeInvoiceNumber = preg_replace('/[^A-Za-z0-9_\-]/', '_', $invoiceNumber);
+
+            // Create temp directory if not exists
+            $zipFolder = storage_path('app/temp_zip');
+            if (!File::exists($zipFolder)) {
+                File::makeDirectory($zipFolder, 0755, true);
+            }
+
+            $zipFileName = $safeInvoiceNumber . '_' . time() . '.zip';
+            $zipFilePath = $zipFolder . '/' . $zipFileName;
+
+            $zip = new ZipArchive;
+
+            if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+                throw new \Exception('Could not create ZIP file.');
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | 1. Add Invoice PDF
+            |--------------------------------------------------------------------------
+            */
+            try {
+                $invoicePdf = $zohoBook->getInvoicePdf($invoiceId);
+
+                if (!empty($invoicePdf)) {
+                    $zip->addFromString($safeInvoiceNumber . '_invoice.pdf', $invoicePdf);
+                }
+            } catch (\Exception $e) {
+                Log::error('Invoice PDF ZIP error: ' . $e->getMessage());
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | 2. Add E-Way Bill PDF
+            |--------------------------------------------------------------------------
+            */
+            if (!empty($invoice->ewayBills?->ewaybill_id)) {
+                try {
+                    $ewayBillPdf = $zohoBook->getEwayBillPdf($invoice->ewayBills->ewaybill_id);
+
+                    if (!empty($ewayBillPdf)) {
+                        $zip->addFromString($safeInvoiceNumber . '_ewaybill.pdf', $ewayBillPdf);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('E-Way Bill ZIP error: ' . $e->getMessage());
+                }
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | 3. Add Documents
+            |--------------------------------------------------------------------------
+            */
+            if (!empty($invoice->documents) && count($invoice->documents) > 0) {
+                foreach ($invoice->documents as $index => $doc) {
+                    try {
+                        $file = $zohoBook->getDocument('invoices', $invoiceId, $doc->document_id);
+
+                        if (!empty($file['body'])) {
+                            $originalName = $doc->file_name ?? ('document_' . ($index + 1));
+
+                            // Safe filename
+                            $safeFileName = preg_replace('/[^A-Za-z0-9_\-\.]/', '_', $originalName);
+
+                            // Prevent duplicate names
+                            $pathInZip = 'documents/' . $safeFileName;
+
+                            if ($zip->locateName($pathInZip) !== false) {
+                                $fileInfo = pathinfo($safeFileName);
+                                $name = $fileInfo['filename'] ?? 'document';
+                                $ext = isset($fileInfo['extension']) ? '.' . $fileInfo['extension'] : '';
+                                $safeFileName = $name . '_' . ($index + 1) . $ext;
+                                $pathInZip = 'documents/' . $safeFileName;
+                            }
+
+                            $zip->addFromString($pathInZip, $file['body']);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Document ZIP error (Doc ID: ' . $doc->document_id . '): ' . $e->getMessage());
+                    }
+                }
+            }
+
+            $zip->close();
+
+            if (!file_exists($zipFilePath)) {
+                throw new \Exception('ZIP file was not created.');
+            }
+
+            return response()->download($zipFilePath, $zipFileName)->deleteFileAfterSend(true);
+
+        } catch (\Exception $e) {
+            Log::error('Invoice ZIP download failed: ' . $e->getMessage());
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to create ZIP file.'
+            ], 500);
+        }
+    }
+
+    public function openDocument(ZohoBookService $zohoBook, Request $request)
+    {
+        try {
+
+            $type = $request->type;
+            $id = $request->id;
+            $documentId = $request->document_id;
+
+            $file = $zohoBook->getDocument($type, $id, $documentId);
+
+            return response($file['body'], 200)
+                ->header('Content-Type', $file['content_type'])
+                ->header('Content-Disposition', 'inline');
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function create()
     {
-
         return view('admin.po.add');
     }
 

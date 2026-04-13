@@ -63,6 +63,19 @@
                             </div>
 
                             <div class="form-group mb-3">
+                                <label for="invoices">Select Invoices</label>
+                                <select name="invoices[]" id="invoices" class="form-control select2" multiple required>
+                                    <option value="">-- Select Invoices --</option>
+                                    @foreach($invoice as $ok => $ov)
+                                    <option value="{{ $ov->id }}" {{ $ov->investor_id ? 'disabled' : ''}}>{{ $ov->invoice_number }}</option>
+                                    @endforeach
+                                </select>
+                                @error('invoices')
+                                <span class="error">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="form-group mb-3">
                                 <label>Password <span class="mandatory">*</span></label>
                                 <div class="input-group">
                                     <input type="password" name="password"

@@ -6,8 +6,10 @@
 <script src="{{ asset('libs/simplebar/simplebar.min.js') }}"></script>
 <script src="{{ asset('libs/node-waves/waves.min.js') }}"></script>
 <script src="{{ asset('libs/apexcharts/apexcharts.min.js') }}"></script>
-<script src="{{ asset('js/pages/dashboard.init.js') }}"></script>
-
+<!-- <script src="{{ asset('js/pages/dashboard.init.js') }}"></script> -->
+@if(Route::is('investor.po.index') || Route::is('investor.invoice.index') || Route::is('investor.po.viewpo'))
+    <script src="{{ asset('js/document-preview.js') }}"></script>
+@endif
 <!-- Dropify js -->
 <script src="{{ asset('libs/dropify/dist/js/dropify.js') }}"></script>
 <script src="{{ asset('libs/dropify/dist/js/dropify.min.js') }}"></script>
@@ -45,8 +47,8 @@
 @if(route::is('merchant.addCoupon') || route::is('merchant.editCoupon') || route::is('merchant.couponList'))
     <script src="{{ asset('js/merchant/coupon.js') }}"></script>
 @endif
-
-<script src="{{ asset('js/merchant/validation.js') }}"></script>
+<script src="{{ asset('js/jquery.validate.min.js') }}"></script>
+<script src="{{ asset('js/validation.js') }}"></script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 <script src="{{ asset('templateEditor/ckeditor/ckeditor.js') }}"></script>
@@ -62,6 +64,5 @@
 <script src="{{ asset('js/config.js') }}"></script>
 <script src="{{ asset('js/module/role.js') }}"></script>
 <script src="{{ asset('js/module/faq.js') }}"></script>
-<script src="{{ asset('js/module/staff.js') }}"></script>
 <script src="{{ asset('js/module/attribute.js') }}"></script>
 <script src="{{ asset('templateEditor/ckeditor/ckeditor.js') }}"></script>

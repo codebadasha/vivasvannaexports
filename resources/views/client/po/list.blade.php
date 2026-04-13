@@ -27,11 +27,15 @@
                         <form action="{{ route('client.po.index') }}">
                             <div class="row">
                                 <div class="col-md-4">
+                                    <label class="control-label">Purchase Order Number</label>
+                                    <input class="form-control" name="order_number" value="{{ request()->order_number }}" placeholder="Sales Order Number">
+                                </div>
+                                <div class="col-md-4">
                                     <label class="control-label">Project</label>
                                     <select class="form-control select2" name="project">
                                         <option value="">Select Project</option>
-                                        @forelse(\App\Models\Project::where('client_id',Auth::guard('client')->user()->id)->where('is_active',1)->where('is_delete',0)->get() as $sk => $sv)
-                                        <option value="{{ $sv->id }}">{{ $sv->name }}</option>
+                                        @forelse($projects as $sk => $sv)
+                                        <option value="{{ $sv->id }}" {{ request()->project == $sv->id ? 'selected' : '' }}>{{ $sv->name }}</option>
                                         @empty
                                         <option value="">No Data Found</option>
                                         @endforelse
@@ -50,7 +54,7 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-2 mt-2">
+                                <div class="col-md-3 mt-4">
                                     <button type="submit" class="btn btn-primary vendors save_button mt-1">Submit</button>
                                     @if($filter == 1)
                                     <a href="{{ route('client.po.index') }}" class="btn btn-danger mt-1 cancel_button" id="filter" name="save_and_list" value="save_and_list">
@@ -97,7 +101,7 @@
                                     <td>{{ $ov->project?->name ?? '---' }}</td>
                                     <td>{{ $ov->salesorder_number }}</td>
                                     <td>{{ $ov->reference_number }}</td>
-                                    <td>{{ Str::title(str_replace('_', ' ', $ov->status)) }}</td>
+                                    <td>{{ Str::title(str_replace('_', ' ', $ov->current_sub_status == 'open' ? 'Confirmed' : $ov->current_sub_status)) }}</td>
                                     <td>{{ Str::title(str_replace('_', ' ', $ov->invoiced_status)) }}</td>
                                     <td>{{ Str::title(str_replace('_', ' ', $ov->paid_status)) }}</td>
                                     <td>₹ {{ number_format($ov->total_invoiced_amount, 2, '.', ',') }}</td>
@@ -114,10 +118,10 @@
                                         <small class="text-danger">Overdue by {{ $overdueDays }} day{{ $overdueDays > 1 ? 's' : '' }}</small>
                                         @endif
                                     </td>
-                                    <td>{{ $ov->order_status }}</td>
+                                    <td>{{ Str::title(str_replace('_', ' ', $ov->current_sub_status == 'open' ? 'Confirmed' : $ov->current_sub_status)) }}</td>
                                     <td>{{ $ov->delivery_method }}</td>
                                     <td>
-                                        <a class="btn btn-primary waves-effect waves-light" href="{{ route('client.po.viewpo',base64_encode($ov->salesorder_id)) }}" role="button">
+                                        <a class="btn btn-primary waves-effect waves-light" href="{{ route('client.po.viewpo',base64_encode($ov->id)) }}" role="button">
                                             <i class="fa fa-eye"></i>
                                         </a>
                                         <a href="javascript:void(0);"
@@ -127,6 +131,36 @@
                                             title="Download Sales Order PDF">
                                             <i class="fa fa-download"></i>
                                         </a>
+                                        @if(!empty($ov->documents) && count($ov->documents) > 0)
+                                            <div class="btn-group">
+                                                <button type="button" 
+                                                    class="btn btn-info dropdown-toggle waves-effect waves-light"
+                                                    data-bs-toggle="dropdown" 
+                                                    aria-expanded="false">
+                                                    <i class="fa fa-paperclip"></i>
+                                                </button>
+                                                <ul class="dropdown-menu" style="min-width: 250px;">
+                                                    @foreach($ov->documents as $index => $doc)
+                                                        <li>
+                                                            <a class="dropdown-item openDocument" 
+                                                            data-token="{{ csrf_token() }}"
+                                                            data-type="salesorders"
+                                                            data-url="{{ route('client.po.openDocument') }}"
+                                                            data-id="{{ $ov->zoho_salesorder_id }}"
+                                                            data-document-id="{{ $doc['document_id'] }}"
+                                                            href="javascript:void(0);">
+                                                                @if($doc['file_type'] == 'pdf')
+                                                                <i class="fa fa-file-pdf" style="margin-right: 6px; font-size: 20px;"></i>
+                                                                @else
+                                                                <i class="fas fa-image" style="margin-right: 6px; font-size: 20px;"></i>
+                                                                @endif
+                                                                {{ $doc['file_name'] }}
+                                                            </a>
+                                                        </li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        @endif
                                     </td>
                                 </tr>
                                 @endforeach
@@ -139,7 +173,9 @@
         </div> <!-- end row -->
     </div> <!-- container-fluid -->
 </div>
+@include('inc.documentModal')
 @endsection
+
 @section('js')
 <script type="text/javascript">
     $(document).ready(function() {

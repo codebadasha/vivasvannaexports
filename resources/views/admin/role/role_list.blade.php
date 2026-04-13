@@ -1,7 +1,9 @@
 @extends('layouts.admin')
 @section('title','All Roles')
 @section('content')
-
+@php
+    $showActionColumn = !empty(array_intersect(['edit'], $selectedAction['role']));
+@endphp
 <div class="page-content">
     <div class="container-fluid">
 
@@ -25,7 +27,7 @@
             <div class="col-12">
                 <div class="text-end mb-4">
                     @if(array_key_exists('role',$selectedAction) && in_array('add',$selectedAction['role']))
-                    <a href="{{ route('admin.addRole') }}" class="btn btn-primary"><i class="fa fa-plus pe-1"></i>Add</a>
+                    <a href="route('admin.addRole')" class="btn btn-primary"><i class="fa fa-plus pe-1"></i>Add</a>
                     @endif
                 </div>
                 <div class="card">
@@ -36,7 +38,9 @@
                                 <tr>
                                     <th>Sr. No</th>
                                     <th>Role</th>
-                                    <th class='notexport'>Actions</th>
+                                    @if($showActionColumn)
+                                        <th class="notexport">Actions</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -45,8 +49,8 @@
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $rv->name }}</td>
+                                    @if($showActionColumn)
                                     <td>
-                                        @if($rk != 0)
                                         @if(array_key_exists('role',$selectedAction) && in_array('edit',$selectedAction['role']))
                                         <a class="btn btn-primary waves-effect waves-light" href="{{ route('admin.editRole',base64_encode($rv->id)) }}" role="button" title="Edit">Edit </a>
                                         @endif
@@ -55,8 +59,8 @@
                                             Delete
                                         </a>
                                         @endif
-                                        @endif
                                     </td>
+                                    @endif
                                 </tr>
                                 @endforeach
                                 @endif

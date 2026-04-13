@@ -1,6 +1,9 @@
 @extends('layouts.admin')
 @section('title','Dashboard')
 @section('content')
+@php
+$receivedAmount = \App\Models\SalesOrderInvoice::sum(\DB::raw('total - balance'));
+@endphp
 <div class="page-content">
     <div class="container-fluid">
         <div class="row">
@@ -24,137 +27,130 @@
                 <div class="row">
                     @if(in_array(1,$element))
                         <div class="col-md-4">
-                            <div class="card mini-stats-wid">
-                                <div class="card-body">
-                                    <div class="d-flex">
-                                        <div class="flex-grow-1">
-                                            <p class="text-muted fw-medium">Total Projects</p>
-                                            <h4 class="mb-0">{{ \App\Models\Project::where('is_active',1)->where('is_delete',0)->count() }}</h4>
-                                        </div>
+                            <div class="card mini-stats-wid" style="height: -webkit-fill-available;">
+                                <a href="{{ route('admin.project.index') }}">
+                                    <div class="card-body">
+                                        <div class="d-flex">
+                                            <div class="flex-grow-1">
+                                                <p class="text-muted fw-medium">Total Projects</p>
+                                                <h4 class="mb-0">{{ $data['total_projects']}}</h4>
+                                            </div>
 
-                                        <div class="flex-shrink-0 align-self-center">
-                                            <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
-                                                <span class="avatar-title">
-                                                    <i class="bx bx-copy-alt font-size-24"></i>
-                                                </span>
+                                            <div class="flex-shrink-0 align-self-center">
+                                                <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+                                                    <span class="avatar-title rounded-circle bg-primary">
+                                                        <i class="bx bx-copy-alt font-size-24"></i>
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </a>
                             </div>
                         </div>
                     @endif
                     @if(in_array(2,$element))
                         <div class="col-md-4">
                             <div class="card mini-stats-wid">
-                                <div class="card-body">
-                                    <div class="d-flex">
-                                        <div class="flex-grow-1">Total PO Amount</p>
-                                            <h4 class="mb-0">₹ {{ number_format(\App\Models\SalesOrder::sum('total'), 2, '.', ',') }}</h4>
-                                        </div>
+                                <a href="{{ route('admin.so.index') }}">
+                                    <div class="card-body">
+                                        <div class="d-flex">
+                                            <div class="flex-grow-1">
+                                                <p class="text-muted fw-medium">Total Sales Order</p>
+                                                <h4 class="mb-0">{{ $data['total_so_count'] }}</h4>
+                                            <h5 class="mb-0">₹ {{ number_format($data['total_so_amount'], 2, '.', ',') }}</h5>
+                                            </div>
 
-                                        <div class="flex-shrink-0 align-self-center ">
-                                            <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
-                                                <span class="avatar-title rounded-circle bg-primary">
-                                                    <i class="bx bx-archive-in font-size-24"></i>
-                                                </span>
+                                            <div class="flex-shrink-0 align-self-center ">
+                                                <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
+                                                    <span class="avatar-title rounded-circle bg-primary">
+                                                        <i class="bx bx-archive-in font-size-24"></i>
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </a>
                             </div>
                         </div>
                     @endif
                     @if(in_array(3,$element))
                         <div class="col-md-4">
                             <div class="card mini-stats-wid">
-                                <div class="card-body">
-                                    <div class="d-flex">
-                                        <div class="flex-grow-1">
-                                            <p class="text-muted fw-medium">Total Invoice Raised</p>
-                                            <h4 class="mb-0">₹ {{ number_format(\App\Models\SalesOrderInvoice::sum('total'), 2, '.', ',') }}</h4>
-                                        </div>
+                                <a href="{{ route('admin.so.allinvoice.index') }}">
+                                    <div class="card-body">
+                                        <div class="d-flex">
+                                            <div class="flex-grow-1">
+                                                <p class="text-muted fw-medium">Total Invoice Raised</p>
+                                                <h4 class="mb-0">{{ $data['total_invoice_count'] }}</h4>
+                                                <h5 class="mb-0">₹ {{ number_format($data['total_invoice_amount'], 2, '.', ',') }}</h5>
+                                            </div>
 
-                                        <div class="flex-shrink-0 align-self-center">
-                                            <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
-                                                <span class="avatar-title rounded-circle bg-primary">
-                                                    <i class="bx bx-purchase-tag-alt font-size-24"></i>
-                                                </span>
+                                            <div class="flex-shrink-0 align-self-center">
+                                                <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
+                                                    <span class="avatar-title rounded-circle bg-primary">
+                                                        <i class="bx bx-purchase-tag-alt font-size-24"></i>
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </a>
                             </div>
                         </div>
                     @endif
                     @if(in_array(4,$element))
                         <div class="col-md-4">
                             <div class="card mini-stats-wid">
-                                <div class="card-body">
-                                    <div class="d-flex">
-                                        <div class="flex-grow-1">
-                                            <p class="text-muted fw-medium">Total Invoice Paid</p>
-                                            <h4 class="mb-0">{{ \App\Models\SalesOrderInvoice::where('status','paid')->count() }}</h4>
-                                        </div>
+                                <a href="{{ route('admin.so.allinvoice.index', ['status' => 1]) }}">
+                                    <div class="card-body">
+                                        <div class="d-flex">
+                                            <div class="flex-grow-1">
+                                                <p class="text-muted fw-medium">Paid Invoices</p>
+                                                <h4 class="mb-0">{{ $data['paid_invoice_count'] }}</h4>
+                                                <h5 class="mb-0">₹ {{ number_format($data['paid_invoice_amount'], 2, '.', ',') }}</h5>
+                                            </div>
 
-                                        <div class="flex-shrink-0 align-self-center">
-                                            <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
-                                                <span class="avatar-title rounded-circle bg-primary">
-                                                    <i class="bx bx-purchase-tag-alt font-size-24"></i>
-                                                </span>
+                                            <div class="flex-shrink-0 align-self-center">
+                                                <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
+                                                    <span class="avatar-title rounded-circle bg-primary">
+                                                        <i class="bx bx-purchase-tag-alt font-size-24"></i>
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-                    @if(in_array(5,$element))
-                        <div class="col-md-4">
-                            <div class="card mini-stats-wid">
-                                <div class="card-body">
-                                    <div class="d-flex">
-                                        <div class="flex-grow-1">
-                                            <p class="text-muted fw-medium">Total Received Payment</p>
-                                            <h4 class="mb-0">₹ {{ number_format(\App\Models\SalesOrderInvoice::where('status','paid')->sum('total'), 2, '.', ',') }}</h4>
-                                        </div>
-
-                                        <div class="flex-shrink-0 align-self-center">
-                                            <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
-                                                <span class="avatar-title rounded-circle bg-primary">
-                                                    <i class="bx bx-purchase-tag-alt font-size-24"></i>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                </a>
                             </div>
                         </div>
                     @endif
                     @if(in_array(6,$element))
                         <div class="col-md-4">
                             <div class="card mini-stats-wid">
-                                <div class="card-body">
-                                    <div class="d-flex">
-                                        <div class="flex-grow-1">
-                                            <p class="text-muted fw-medium">Over Due Amount</p>
-                                            <h4 class="mb-0">₹ {{ number_format(\App\Models\SalesOrderInvoice::where('status','overdue')->sum('total'), 2, '.', ',') }}</h4>
-                                        </div>
+                                <a href="{{ route('admin.so.allinvoice.index', ['status' => 3]) }}">
+                                    <div class="card-body">
+                                        <div class="d-flex">
+                                            <div class="flex-grow-1">
+                                                <p class="text-muted fw-medium">Overdue Invoices</p>
+                                                <h4 class="mb-0">{{ $data['overdue_invoice_count'] }}</h4>
+                                            <h5 class="mb-0">₹ {{ number_format($data['overdue_invoice_amount'], 2, '.', ',') }}</h5>
+                                            </div>
 
-                                        <div class="flex-shrink-0 align-self-center">
-                                            <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
-                                                <span class="avatar-title rounded-circle bg-primary">
-                                                    <i class="bx bx-purchase-tag-alt font-size-24"></i>
-                                                </span>
+                                            <div class="flex-shrink-0 align-self-center">
+                                                <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
+                                                    <span class="avatar-title rounded-circle bg-primary">
+                                                        <i class="bx bx-purchase-tag-alt font-size-24"></i>
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </a>
                             </div>
                         </div>
                     @endif
-                    <!-- <div class="col-md-4">
-                        <div class="card mini-stats-wid">
+                    <div class="col-md-4">
+                        <div class="card mini-stats-wid" style="height: -webkit-fill-available;">
                             <div class="card-body">
                                 <div class="d-flex">
                                     <div class="flex-grow-1">
@@ -171,7 +167,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div> -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -186,30 +182,50 @@
                                         <th>Sr. No</th>
                                         <th>Project</th>
                                         <th>Client</th>
-                                        <th>PO Number</th>
+                                        <th>So Number</th>
                                         <th>Item</th>
-                                        <th>BOQ Qty</th>
-                                        <th>PO Qty</th>
+                                        <th>So Qty</th>
                                         <th>Delivered Qty</th>
                                         <th class='notexport'>Remaining Qty</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                @if(!is_null($detail))
-                                    @foreach($detail as $ok => $ov)
+                                    @if($items->isNotEmpty())
+                                        @foreach($items as $item)
                                         <tr>
                                             <td>{{ $loop->iteration }}</td>
-                                            <td>{{ !is_null($ov->salesOrder) && !is_null($ov->salesOrder->project) ? $ov->salesOrder->project->name : '--' }}</td>
-                                            <td>{{ !is_null($ov->salesOrder) && !is_null($ov->salesOrder->client) ? $ov->salesOrder->client->company_name : '--' }}</td>
-                                            <td>{{ !is_null($ov->salesOrder) ? $ov->salesOrder->salesorder_number : '--' }}</td>
-                                            <td>{{ !is_null($ov->product) ? $ov->product->name : '---' }}</td>
-                                            <td>{{ $ov->remaining_boq_qty ? 'yes' : '---'}}</td>
-                                            <td>{{ intval($ov->quantity) }} {{$ov->unit}}</td>
-                                            <td>Coming Soon</td>
-                                            <td>Coming Soon</td>
+                                            <td>
+                                                {{ $item->salesOrder?->project?->name ?? '---' }}
+                                            </td>
+                                            <td>
+                                                {{ $item->salesOrder?->company_name ?? '---' }}
+                                            </td>
+                                            <td>
+                                                {{ $item->salesOrder?->salesorder_number ?? '--' }}
+                                            </td>
+                                            <td>
+                                                {{ $item->name ?? '---' }}
+                                            </td>
+                                            <td>
+                                                {{ intval($item->quantity) }} {{ $item->unit ?? '' }}
+                                            </td>
+                                            <td>
+                                                {{ number_format($item->delivered_quantity, 2) }} {{ $item->unit ?? '' }}
+                                            </td>
+                                            <td>
+                                                @php
+                                                    $delivered = $item->delivered_quantity;
+                                                    $remaining = max(0, $item->quantity - $delivered);
+                                                @endphp
+                                                {{ number_format($remaining, 2) }} {{ $item->unit ?? '' }}
+                                            </td>
                                         </tr>
-                                    @endforeach
-                                @endif
+                                        @endforeach
+                                    @else
+                                        <tr>
+                                            <td colspan="7" class="text-center">No records found</td>
+                                        </tr>
+                                    @endif
                                 </tbody>
                             </table>
                         </div>

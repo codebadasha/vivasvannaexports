@@ -11,7 +11,14 @@
 
                     <div class="page-title-right">
                         <ol class="breadcrumb m-0">
-                            <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Main Dashboard</a></li>
+                            @if(request()->has('from_client') && request()->from_client == 1 && isset($client))
+                                <li class="breadcrumb-item">
+                                    <a href="{{ route('admin.client.clientDashboard', base64_encode($client->id)) }}">
+                                        {{ $client->company_name }} Dashboard
+                                    </a>
+                                </li>
+                            @endif
                             <li class="breadcrumb-item active">All Invoices</li>
                         </ol>
                     </div>
@@ -19,6 +26,7 @@
                 </div>
             </div>
         </div>
+        
 
         <div class="row">
             <div class="col-12">
@@ -26,17 +34,41 @@
                     <div class="card-body">
                         <form action="{{ route('investor.invoice.index') }}">
                             <div class="row">
-                                <div class="col-md-4">
+                                <div class="col-md-4 mb-3">
                                     <label class="control-label">Invoice Number</label>
                                     <input class="form-control" name="invoice_number" value="{{ request()->invoice_number }}" placeholder="Invoice Number">
                                 </div>
-
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Client</label>
+                                        <select class="form-control select2" name="client">
+                                            <option value="">Select Client</option>
+                                            @forelse($clients as $sk => $sv)
+                                            <option value="{{ $sv->zoho_contact_id }}" {{ request()->client == $sv->zoho_contact_id ? 'selected' : '' }}>{{ $sv->company_name }}</option>
+                                            @empty
+                                            <option value="">No Data Found</option>
+                                            @endforelse
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="control-label">Purchase Orders</label>
+                                    <select class="form-select select2" name="order">
+                                        <option value="">Select Purchase Order</option>
+                                        @forelse($so as $sk => $sv)
+                                        <option value="{{ $sv->id }}" {{ request()->order == $sv->id ? 'selected' : '' }} >{{ $sv->salesorder_number }}</option>
+                                        @empty
+                                        <option value="">No Data Found</option>
+                                        @endforelse
+                                    </select>
+                                </div>
                                 <div class="col-md-4">
                                     <label class="control-label">Invoice Status</label>
                                     <select class="form-select" name="status">
                                         <option value="" selected>All</option>
                                         <option value="1" {{ request()->status == 1 ? 'selected' : '' }}>Paid</option>
                                         <option value="2" {{ request()->status == 2 ? 'selected' : '' }}>Un Paid</option>
+                                        <option value="3" {{ request()->status == 3 ? 'selected' : '' }}>Overdue</option>
                                     </select>
                                 </div>
 
@@ -65,7 +97,7 @@
                                 </div>
 
 
-                                <div class="col-md-2 mt-4">
+                                <div class="col-md-3 mt-4">
                                     <button type="submit" class="btn btn-primary vendors save_button mt-1">Submit</button>
                                     @if($filter == 1)
                                     <a href="{{ route('investor.invoice.index') }}" class="btn btn-danger mt-1 cancel_button" id="filter" name="save_and_list" value="save_and_list">
@@ -83,9 +115,75 @@
         <!-- end page title -->
         <div class="row">
             <div class="col-12">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card mini-stats-wid">
+                            <div class="card-body">
+                                <div class="d-flex">
+                                    <div class="flex-grow-1">
+                                        <p class="text-muted fw-medium">Total Purchase Orders</p>
+                                        <h4 class="mb-0">{{ $data['total_po_count'] }}</h4>
+                                        <h5 class="mb-0">₹ {{ number_format($data['total_po_amount'], 2, '.', ',') }}</h5>
+                                    </div>
+
+                                    <div class="flex-shrink-0 align-self-center ">
+                                        <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
+                                            <span class="avatar-title rounded-circle bg-primary">
+                                                <i class="bx bx-archive-in font-size-24"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mini-stats-wid">
+                            <div class="card-body">
+                                <div class="d-flex">
+                                    <div class="flex-grow-1">
+                                        <p class="text-muted fw-medium">Invoice Assign</p>
+                                        <h4 class="mb-0">{{ $data['total_invoice_count'] }}</h4>
+                                        <h5 class="mb-0">₹ {{ number_format($data['total_invoice_amount'], 2, '.', ',') }}</h5>
+                                    </div>
+
+                                    <div class="flex-shrink-0 align-self-center">
+                                        <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
+                                            <span class="avatar-title rounded-circle bg-primary">
+                                                <i class="bx bx-purchase-tag-alt font-size-24"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mini-stats-wid" style="height: -webkit-fill-available;">
+                            <div class="card-body">
+                                <div class="d-flex">
+                                    <div class="flex-grow-1">
+                                        <p class="text-muted fw-medium">Paid Invoices</p>
+                                        <h4 class="mb-0">{{ $data['paid_invoice_count'] }}</h4>
+                                        <h5 class="mb-0">₹ {{ number_format($data['paid_invoice_amount'], 2, '.', ',') }}</h5>
+                                    </div>
+
+                                    <div class="flex-shrink-0 align-self-center">
+                                        <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
+                                            <span class="avatar-title rounded-circle bg-primary">
+                                                <i class="bx bx-purchase-tag-alt font-size-24"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
                 <div class="card">
                     <div class="card-body">
-                        <a href="{{ route('admin.po.addAllInvoice') }}" class="btn btn-primary float-right">Add Invoice</a><br /><br /><br />
                         <table id="datatable-buttons" class="table table-striped table-bordered dt-responsive nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
                             <thead>
                                 <tr>
@@ -97,6 +195,7 @@
                                     <th>Due Date</th>
                                     <th>Amount</th>
                                     <th>Balance Due</th>
+                                    <th>E-Way Bill</th>
                                     <th class='notexport'>Actions</th>
                                 </tr>
                             </thead>
@@ -105,7 +204,7 @@
                                 @foreach($invoice as $ik => $iv)
                                 <tr>
                                     <td>{{ \Carbon\Carbon::parse($iv->date)->format('d/m/Y') }}</td>
-                                    <td>{{ $iv->salesOrder->client->company_name ?? '---' }}</td>
+                                    <td>{{ $iv->customer_name ?? '---' }}</td>
                                     <td>{{ $iv->invoice_number }}</td>
                                     <td>{{ $iv->reference_number }}</td>
                                     <td>{{ Str::title(str_replace('_', ' ', $iv->status)) }}</td>
@@ -113,18 +212,75 @@
                                     <td>₹ {{ number_format($iv->total, 2, '.', ',') }}</td>
                                     <td>₹ {{ number_format($iv->balance, 2, '.', ',') }}</td>
                                     <td>
+                                        @if($iv->ewayBills)
+                                            <a href="javascript:void(0);" class="viewEwayBill" data-token="{{ csrf_token() }}" data-url="{{ route('investor.invoice.ewaybill',base64_encode($iv->ewayBills->ewaybill_id)) }}">{{ $iv->ewayBills?->ewaybill_number }}</a>
+                                        @else
+                                            ---
+                                        @endif
+                                    </td>
+                                    <td>
                                         <a href="javascript:void(0);"
                                             class="btn btn-primary waves-effect waves-light viewInvoiceBtn"
                                             data-id="{{ base64_encode($iv->invoice_id) }}"
                                             role="button" title="View">
                                             <i class="fa fa-eye"></i>
                                         </a>
-                                        <a href="javascript:void(0);"
-                                            class="btn btn-danger waves-effect waves-light downloadInvoiceBtn"
-                                            data-id="{{ base64_encode($iv->invoice_id) }}"
-                                            role="button" title="Download PDF">
-                                            <i class="fa fa-download"></i>
-                                        </a>
+                                        <div class="btn-group">
+                                            <button type="button" 
+                                                class="btn btn-danger dropdown-toggle waves-effect waves-light"
+                                                data-bs-toggle="dropdown" 
+                                                aria-expanded="false"
+                                                title="Download">
+                                                <i class="fa fa-download"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <a class="dropdown-item downloadInvoiceBtn"
+                                                    href="javascript:void(0);"
+                                                    data-id="{{ base64_encode($iv->invoice_id) }}">
+                                                        <i class="fa fa-file-pdf text-danger me-2"></i> Download Invoice PDF
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item downloadInvoiceZipBtn"
+                                                    href="javascript:void(0);"
+                                                    data-id="{{ base64_encode($iv->invoice_id) }}">
+                                                        <i class="fa fa-file-archive text-warning me-2"></i> Download All ZIP
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        @if(!empty($iv->documents) && count($iv->documents) > 0)
+                                            <div class="btn-group">
+                                                <button type="button" 
+                                                    class="btn btn-info dropdown-toggle waves-effect waves-light"
+                                                    data-bs-toggle="dropdown" 
+                                                    aria-expanded="false">
+                                                    <i class="fa fa-paperclip"></i>
+                                                </button>
+                                                <ul class="dropdown-menu" style="min-width: 250px;">
+                                                    @foreach($iv->documents as $index => $doc)
+                                                        <li>
+                                                            <a class="dropdown-item openDocument"
+                                                            style="font-sixe:16px;"
+                                                            href="javascript:void(0);"
+                                                            data-token="{{ csrf_token() }}"
+                                                            data-type="invoices"
+                                                            data-url="{{ route('investor.po.openDocument') }}"
+                                                            data-id="{{ $iv->invoice_id }}"
+                                                            data-document-id="{{ $doc['document_id'] }}">
+                                                                @if($doc['file_type'] == 'pdf')
+                                                                <i class="fa fa-file-pdf" style="margin-right: 6px; font-size: 20px;"></i>
+                                                                @else
+                                                                <i class="fas fa-image" style="margin-right: 6px; font-size: 20px;"></i>
+                                                                @endif
+                                                                {{ $doc['file_name'] }}
+                                                            </a>
+                                                        </li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        @endif
                                     </td>
                                 </tr>
                                 @endforeach
@@ -154,10 +310,12 @@
         </div>
     </div>
 </div>
+
+@include('inc.documentModal')
 @endsection
 @section('js')
-
 <script>
+
     $(document).on('click', '.viewInvoiceBtn', function() {
         let invoiceId = $(this).data('id');
         let modal = $('#invoiceViewModal');
@@ -182,13 +340,39 @@
             }
         });
     });
-
+</script>
+<script>
     $(document).on('click', '.downloadInvoiceBtn', function() {
         let invoiceId = $(this).data('id');
-        let url = "{{ route('investor.po.invoicedownload', ['id' => ':id']) }}";
+        let url = "{{ route('investor.so.invoicedownload', ['id' => ':id']) }}";
         url = url.replace(':id', invoiceId);
-        window.open(url, '_blank'); // open PDF in new tab or trigger browser download
+
+        window.open(url, '_blank');
+    });
+
+    $(document).on('click', '.downloadInvoiceZipBtn', function() {
+        let invoiceId = $(this).data('id');
+        let url = "{{ route('investor.so.invoicezip', ['id' => ':id']) }}";
+        url = url.replace(':id', invoiceId);
+
+        Swal.fire({
+            title: 'Please Wait...',
+            text: 'Preparing ZIP file...',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        let iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = url;
+        document.body.appendChild(iframe);
+
+        setTimeout(() => {
+            Swal.close();
+        }, 2500);
     });
 </script>
-
 @endsection

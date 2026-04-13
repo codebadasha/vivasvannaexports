@@ -50,7 +50,7 @@ class ResetPasswordController extends Controller
 
     protected function broker()
     {
-        return Password::broker('clients');
+        return Password::broker('client');
     }
 
     protected function guard()

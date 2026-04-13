@@ -38,6 +38,7 @@ class ZohoSyncVendor extends Command
             $resp = $zoho->getAllVendor([
                 'page'     => $page,
                 'per_page' => $perPage,
+                'sort_column' => 'created_time'
             ]);
 
             $vendors = $resp['contacts'] ?? [];

@@ -47,7 +47,7 @@ class SalesOrderItem extends Model
     /** 🔗 Relations */
     public function salesOrder()
     {
-        return $this->belongsTo(SalesOrder::class, 'sales_order_id', 'salesorder_id');
+        return $this->belongsTo(SalesOrder::class);
     }
 
     public function product()
@@ -58,6 +58,19 @@ class SalesOrderItem extends Model
     public function taxes()
     {
         return $this->hasMany(SalesOrderItemTax::class);
+    }
+
+    public function getDeliveredQuantityAttribute(): float
+    {
+        if (!$this->salesOrder || $this->salesOrder->invoices->isEmpty()) {
+            return 0;
+        }
+
+        return $this->salesOrder->invoices
+            ->flatMap->items
+            ->where('item_id', $this->item_id)     // ← usually the most reliable
+            // ->where('line_item_id', $this->line_item_id)   // only if item_id is not consistent in your data
+            ->sum('quantity');
     }
 
     /** 🧠 Upsert from Zoho */
@@ -105,7 +118,7 @@ class SalesOrderItem extends Model
         // 💰 Sync Taxes
         if (!empty($data['line_item_taxes'])) {
             foreach ($data['line_item_taxes'] as $tax) {
-                SalesOrderItemTax::upsertFromZoho($tax, $data['item_id'], $salesOrderId);
+                SalesOrderItemTax::upsertFromZoho($tax, $item->id, $salesOrderId);
             }
         }
 

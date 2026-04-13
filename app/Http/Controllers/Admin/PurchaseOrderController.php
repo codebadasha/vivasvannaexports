@@ -22,6 +22,7 @@ use ZipArchive;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Auth;
 
 class PurchaseOrderController extends GlobalController
 {
@@ -37,25 +38,26 @@ class PurchaseOrderController extends GlobalController
 
         $query = PurchaseOrder::query();
 
-        // if(isset($request->client) && $request->client != ''){
-        //     $filter = 1;
-        //     $query->where('client_id',$request->client);
-        // }
+        if (isset($request->order_number) && $request->order_number != '') {
+            $filter = 1;
+            $query->where('purchaseorder_number', 'LIKE', '%' . $request->order_number . '%');
+        }
 
-        // if(isset($request->po_start_date) && $request->po_start_date != ''){
-        //     $filter = 1;
-        //     $query->whereBetween(\DB::raw('date(created_at)'),[date('Y-m-d',strtotime(str_replace('/','-',trim($request->po_start_date)))),date('Y-m-d',strtotime(str_replace('/','-',trim($request->po_end_date))))]);
-        // }
+        if(isset($request->client) && $request->client != ''){
+            $filter = 1;
+            $query->where('vendor_id',$request->client);
+        }
 
-        // if(isset($request->boq_id) && $request->boq_id != ''){
-        //     $query->whereHas('item',function($q) use ($request){
-        //         $q->where('boq_item_id',base64_decode($request->boq_id));
-        //     });
-        // }
+        if(isset($request->po_start_date) && $request->po_start_date != ''){
+            $filter = 1;
+            $query->whereBetween('date', [date('Y-m-d', strtotime(str_replace('/', '-', trim($request->po_start_date)))), date('Y-m-d', strtotime(str_replace('/', '-', trim($request->po_end_date))))]);
+        }
 
-        $po = $query->with(['client'])->orderBy('id', 'desc')->get();
+        $po = $query->with(['documents'])->orderBy('id', 'desc')->get();
 
-        return view('admin.po.list', compact('po', 'filter'));
+        $client = SupplierCompany::select('zoho_contact_id','company_name')->get();
+
+        return view('admin.po.list', compact('po', 'filter', 'client'));
     }
 
     public function viewPurchaseOrder(ZohoBookService $zohoBook, $id)

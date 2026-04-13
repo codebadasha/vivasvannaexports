@@ -2,21 +2,37 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CreditRequest extends Model
 {
-    use HasFactory;
+    protected $fillable = [
+        'client_company_id',
+        'credit_amount',
+        'interest_rate',
+        'tolerance',
+        'request_step',
+        'status',
+        'reason'
+    ];
 
-    public function sheet(){
-        return $this->hasMany('App\Models\CreditFinancialData','credit_request_id','id');
+    public function client()
+    {
+        return $this->belongsTo(ClientCompany::class, 'client_company_id');
     }
-    public function statement(){
-        return $this->hasMany('App\Models\CreditData','credit_request_id','id');
+
+    public function bankReport()
+    {
+        return $this->hasOne(CreditRequestBankStatementReport::class);
     }
-    public function client(){
-        return $this->hasOne('App\Models\ClientCompany','id','client_id');
+
+    public function gstReport()
+    {
+        return $this->hasOne(CreditRequestGstScoreReport::class);
     }
-    
+
+    public function balanceSheets()
+    {
+        return $this->hasMany(CreditRequestBalanceSheet::class);
+    }
 }

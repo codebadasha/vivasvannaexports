@@ -24,7 +24,7 @@
         <div class="row">
             <div class="col-12">
                 <div id="masterLinkContainer" class="text-end mb-4">
-                   @if(array_key_exists('invitation',$selectedAction) && in_array('master_create',$selectedAction['invitation']))
+                    @if(array_key_exists('invitation',$selectedAction) && in_array('create-mater-link',$selectedAction['invitation']))
                     <button type="button" id="generateMasterLink" class="btn btn-primary"><i class="fa fa-plus pe-1"></i>Master link</button>
                     @if($masterLink)
                     <button type="button" id="copyMasterLink" data-link="{{ $masterLink }}" class="btn btn-success"><i class="fa fa-copy pe-1"></i>Master link</button>
@@ -37,12 +37,10 @@
                             <thead>
                                 <tr>
                                     <th>Sr. No</th>
-                                    <th>Email</th>
+                                    <th>Client Name</th>
                                     <th>Register GSTN</th>
-                                    <th>Invite Date</th>
                                     <th>Status</th>
                                     <th>Link</th>
-                                    <th class='notexport'>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -50,26 +48,16 @@
                                 @foreach($invitations as $ok => $ov)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
-                                    <td>{{ $ov->email }}</td>
+                                    <td>{{ $ov->client->company_name }}</td>
                                     <td>{{ $ov->gstn ?? '---' }}</td>
-                                    <td>{{ date('d/m/Y',strtotime($ov->created_at))  }}</td>
                                     <td>
-                                        @if($ov->status == 1)
-                                        <span class="badge bg-warning fs-5">Pending</span>
-                                        @elseif($ov->status == 2)
-                                        <span class="badge bg-success fs-5">Registered</span>
+                                        @if($ov->client?->is_verify == 1)
+                                            <span class="badge bg-success">Verified</span>
                                         @else
-                                        <span class="badge bg-secondary fs-5">Expired</span>
+                                            <span class="badge bg-danger">Unverified</span>
                                         @endif
                                     </td>
-                                    <td>{{ $ov->url }}</td>
-                                    <td>
-                                        @if($ov->status == 1)
-                                        <button type="button" class="btn btn-sm btn-primary waves-effect waves-light me-1 copyInvitation" data-link="{{ $ov->url }}" title="Copy Invitation Link">
-                                            <i class="fa fa-copy"></i>
-                                        </button>
-                                        @endif
-                                    </td>
+                                    <td>{{ $ov->invitation->url }}</td>
                                 </tr>
                                 @endforeach
                                 @endif

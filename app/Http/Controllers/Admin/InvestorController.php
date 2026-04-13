@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Investor;
+use App\Models\SalesOrderInvoice;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Exception;
@@ -19,7 +20,7 @@ class InvestorController extends Controller
     public function index()
     {
         try {
-            $investors = Investor::where('is_delete', 0)->get();
+            $investors = Investor::select(['id','name','mobile','email'])->where('is_delete', 0)->get();
             return view('admin.investor.list', compact('investors'));
         } catch (Exception $e) {
             Log::error('Investor Index Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
@@ -34,8 +35,9 @@ class InvestorController extends Controller
     }
 
     public function create()
-    {
-        return view('admin.investor.add');
+    { 
+        $invoice = SalesOrderInvoice::whereNull('investor_id')->get();
+        return view('admin.investor.add', compact('invoice'));
     }
 
     public function store(Request $request)
@@ -45,6 +47,8 @@ class InvestorController extends Controller
             'mobile_number' => 'required|digits:10|unique:investors,mobile,NULL,id,is_delete,0',
             'email_id'      => 'required|email|unique:investors,email,NULL,id,is_delete,0',
             'password'      => 'required|string|min:8|confirmed',
+            'invoices'     => 'required|array',
+            'invoices.*'   => 'exists:sales_order_invoices,id',
         ], [
             'investor_name.required' => 'Investor name is required.',
 
@@ -71,6 +75,10 @@ class InvestorController extends Controller
 
             $route = $request->btn_value === 'save_and_update' ? 'admin.investor.create' : 'admin.investor.index';
 
+            SalesOrderInvoice::whereIn('id', $request->invoices)
+                ->update([
+                    'investor_id' => $investor->id
+                ]);
             return redirect(route($route))->with('messages', [
                 [
                     'type' => 'success',

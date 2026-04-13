@@ -10,7 +10,7 @@
                     <h4 class="mb-0 font-size-18">Send Client Invitations</h4>
                     <div class="page-title-right">
                         <ol class="breadcrumb m-0">
-                            <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">All Invitations</a></li>
+                            <li class="breadcrumb-item"><a href="{{ route('admin.invitations.index') }}">All Invitations</a></li>
                             <li class="breadcrumb-item active">Send Invitationy</li>
                         </ol>
                     </div>

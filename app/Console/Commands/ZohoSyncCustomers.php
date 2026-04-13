@@ -2,11 +2,12 @@
 
 namespace App\Console\Commands;
 
-
-use App\Models\ClientCompany;
-use App\Services\SurepassService;
-use App\Services\ZohoBookService;
 use Illuminate\Console\Command;
+use App\Services\ZohoBookService;
+use App\Services\ZohoWebhookHandler;
+use App\Models\ClientCompany;
+use App\Models\ClientGstDetail;
+use Illuminate\Support\Facades\Log;
 
 class ZohoSyncCustomers extends Command
 {
@@ -27,12 +28,12 @@ class ZohoSyncCustomers extends Command
     /**
      * Execute the console command.
      */
-    public function handle(ZohoBookService $zoho, SurepassService $surepass)
+    public function handle(ZohoBookService $zoho, ZohoWebhookHandler $handler)
     {
         $this->info('Starting Zoho Customers sync...');
         $perPage = (int)$this->option('per_page') ?: 200;
         $page = 1;
-        $totalImported = 0;
+        $totalcustomer = 0;
 
         do {
             $this->info("Fetching page {$page}...");
@@ -40,6 +41,7 @@ class ZohoSyncCustomers extends Command
             $resp = $zoho->getAllCustomer([
                 'page'     => $page,
                 'per_page' => $perPage,
+                'sort_column' => "created_time"
             ]);
 
             $customers = $resp['contacts'] ?? [];
@@ -51,25 +53,20 @@ class ZohoSyncCustomers extends Command
 
             foreach ($customers as $customer) {
 
-                $response = $surepass->verificationProcess($customer['gst_no']);
-                $data = $response->getData(true);
-                if (empty($data['data'])) continue;
+                $this->info("  ↳ Syncing customer contactId :- {$customer['contact_id']}, gstn :- {$customer['gst_no']}...");
+                $contactId = $customer['contact_id'];
+                $gstNumber = $customer['gst_no'];
 
-                $surepassData = $data['data'];
-                $panNumber = strtoupper($surepassData['pan_number']);
-
-                $customerDetails = $zoho->getCustomer($customer['contact_id'])['contact'] ?? [];
-
-                $msmeCheck = $surepass->msmeVerification($panNumber);
-                $msmeRegister = (!empty($msmeCheck['data']['udyam_exists']) && $msmeCheck['data']['udyam_exists'] === true) ? 1 : 0;
-
-                ClientCompany::upsertFromZoho($customerDetails, $surepassData, $msmeRegister);
+                if($contactId && $gstNumber){
+                    $totalcustomer++;
+                    $handler->process('customers', 'upsert', $contactId, true);
+                }
             }
 
             $hasMore = $resp['page_context']['has_more_page'] ?? false;
             $page++;
         } while ($hasMore);
 
-        $this->info("Zoho Products sync completed. Total imported/updated: {$totalImported}");
+        $this->info("Zoho Products sync completed. Total imported/updated: {$totalcustomer}");
     }
 }

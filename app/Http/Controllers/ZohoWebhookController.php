@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
 use App\Models\ZohoWebhook;
+use App\Jobs\ProcessZohoWebhookJob;
 use App\Services\ZohoWebhookHandler;
 
 class ZohoWebhookController extends Controller
@@ -33,7 +34,7 @@ class ZohoWebhookController extends Controller
             Log::warning('Zoho webhook secret mismatch', [
                 'module' => $this->module,
                 'event' => $this->event,
-                'secret' => $secret
+                'secret' => $secret,
             ]);
 
             abort(401, 'Unauthorized'); // will stop execution & return JSON
@@ -53,9 +54,15 @@ class ZohoWebhookController extends Controller
             'event' => $this->event,
             'zohoId' => $zohoId,
         ]);
-        $result = $handler->process($this->module, $this->event, $zohoId);
 
-        return response()->json(['message' => $result]);
+        ProcessZohoWebhookJob::dispatch(
+            $this->module,
+            $this->event,
+            $zohoId
+        );
+        return response()->json([
+            'message' => 'Webhook received. Processing in background.'
+        ]);
     }
 
     private function extractIdFromPayload(array $payload)

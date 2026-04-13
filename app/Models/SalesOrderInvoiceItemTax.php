@@ -21,7 +21,7 @@ class SalesOrderInvoiceItemTax extends Model
 
     public function item()
     {
-        return $this->belongsTo(SalesOrderInvoiceItem::class, 'invoice_item_id');
+        return $this->belongsTo(SalesOrderInvoiceItem::class);
     }
 
     public static function upsertFromZoho(array $taxData, $invoiceItemId, $invoiceId)

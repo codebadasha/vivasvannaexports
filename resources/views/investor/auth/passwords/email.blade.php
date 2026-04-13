@@ -21,7 +21,7 @@
                     </div>
                     <div class="card-body pt-0"> 
                         <div class="auth-logo">
-                            <a href="{{ route('admin.login') }}" class="auth-logo-light">
+                            <a href="{{ route('investor.login') }}" class="auth-logo-light">
                                 <div class="avatar-md profile-user-wid mb-4">
                                     <span class="avatar-title rounded-circle bg-light">
                                        <img src="{{ asset('images/logo-vis.png') }}" alt="" class="" height="60">
@@ -29,7 +29,7 @@
                                 </div>
                             </a>
 
-                            <a href="{{ route('admin.login') }}" class="auth-logo-dark">
+                            <a href="{{ route('investor.login') }}" class="auth-logo-dark">
                                 <div class="avatar-md profile-user-wid mb-4">
                                     <span class="avatar-title rounded-circle bg-light">
                                         <img src="{{ asset('images/logo-vis.png') }}" alt="" class="" height="60">

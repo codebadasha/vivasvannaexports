@@ -7,40 +7,42 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Auth\SendsPasswordResetEmails;
+use App\Models\ClientCompany;
 
 class ForgotPasswordController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Password Reset Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller is responsible for handling password reset emails and
-    | includes a trait which assists in sending these notifications from
-    | your application to your users. Feel free to explore this trait.
-    |
-    */
     use SendsPasswordResetEmails;
 
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
+   public function showLinkRequestForm()
     {
-        $this->middleware('guest');
+        return view('client.auth.passwords.email');
     }
 
-    //defining guard for admins
-    public function showLinkRequestForm()
-    {            
+    public function sendResetLinkEmail(Request $request)
+    {
+        $request->validate([
+            'gstn' => 'required'
+        ]);
 
-        return view('client.auth.passwords.email');
+        // Find client by GSTN
+        $client = ClientCompany::where('gstn', $request->gstn)->first();
+
+        if (!$client) {
+            return back()->withErrors(['gstn' => 'GSTN not found']);
+        }
+
+        // Send reset link using email
+        $response = Password::broker('client')->sendResetLink([
+            'email' => $client->email
+        ]);
+
+        return $response == Password::RESET_LINK_SENT
+            ? back()->with('status', 'Reset link sent to registered email')
+            : back()->withErrors(['email' => 'Unable to send reset link']);
     }
 
     public function broker()
     {
-         return Password::broker('clients');
+        return Password::broker('clients');
     }
 }

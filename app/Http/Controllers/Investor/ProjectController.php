@@ -16,45 +16,44 @@ class ProjectController extends Controller
         
         $this->middleware('investor');
 
-        if(Auth::guard('investor')->user()){
-            $invClient = ClientInvestor::where('investor_id',Auth::guard('investor')->user()->id)->pluck('client_id')->toArray();
-            $this->investorclient = $invClient;
-        }
     }
 
     public function index(Request $request){
 
         $filter = 0;
 
-        $query = Project::query();
-        // $investor = Auth::guard('investor')->user()->id;
-
-        // $invoices = \App\Models\SalesOrderInvoice::with(['salesOrder'])
-        //     ->whereHas('salesOrder', function ($q) use ($investor) {
-        //         $q->where('investor_id', $investor);
-        //     })
-        //     ->whereNotIn('status', ['draft', 'void', 'viewed'])
-        //     ->orderBy('id', 'desc')
-        //     ->get();
-
-        // $project = $invoices
-        //     ->pluck('salesOrder.project')
-        //     ->filter()
-        //     ->unique()
-            // ->values();
+        $query = Project::whereHas('client.investors', function ($q) {
+                        $q->where('investor_id', Auth::guard('investor')->id());
+                    });
 
         if(isset($request->client) && $request->client != ''){
             $filter = 1;
-            $query->where('client_id',$request->client);
-        } 
+            $query->whereHas('client', function ($q) use ($request) {
+                $q->where('id', $request->client);
+            });
+        }
+
+        $client = null;
+        if(isset($request->from_client) && $request->from_client !=''){
+            $client = ClientCompany::select('id', 'company_name')->where('id', $request->client)->first();   // or whatever your model name is
+        }
 
         if(isset($request->po_start_date) && $request->po_start_date != ''){
             $filter = 1;
             $query->whereBetween(\DB::raw('date(created_at)'),[date('Y-m-d',strtotime(str_replace('/','-',trim($request->po_start_date)))),date('Y-m-d',strtotime(str_replace('/','-',trim($request->po_end_date))))]);
         }
 
-        $project = $query->with(['client'])->orderBy('id','desc')->where('is_delete',0)->get();
-
-        return view('investor.project.list',compact('project','filter'));
+        $project = $query->with([
+            'client' => function ($q) {$q->select('id','company_name');}
+            ])->orderBy('id','desc')->where('is_delete',0)->get();
+        
+        $clients = Auth::guard('investor')
+                ->user()
+                ->clients()
+                ->select([
+                   'client_companies.id','company_name',
+                ])
+                ->get();
+        return view('investor.project.list',compact('project','filter','clients', 'client'));
     }
 }

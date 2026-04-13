@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.investor')
 @section('title','Edit Profile')
 @section('content')
 
@@ -20,7 +20,7 @@
 
                     <div class="page-title-right">
                         <ol class="breadcrumb m-0">
-                            <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="{{ route('investor.dashboard') }}">Dashboard</a></li>
                             <li class="breadcrumb-item active">Edit Profile</li>
                         </ol>
                     </div>
@@ -38,7 +38,7 @@
                             <span style="color:red;float:right;" class="pull-right">* is mandatory</span>
                         </div>
 
-                        <form class="custom-validation" action="{{ route('admin.updateProfile') }}" method="post" id="adminProfile">
+                        <form class="custom-validation" action="{{ route('investor.updateProfile') }}" method="post" id="adminProfile">
                             @csrf
                             
                             <div class="form-group mb-3">

@@ -9,6 +9,9 @@ use App\Models\BloodGroup;
 use App\Models\Inquiry;
 use App\Models\PurchaseOrderItem;
 use App\Models\SalesOrderItem;
+use App\Models\Project;
+use App\Models\SalesOrder;
+use App\Models\SalesOrderInvoice;
 use App\Models\Team;
 use Hash;
 use Illuminate\Http\Request;
@@ -31,14 +34,63 @@ class AdminController extends GlobalController
     public function index()
     {
 
-        $detail = SalesOrderItem::with([
-            'salesOrder.project',
-            'salesOrder.client',
-            'product'
-        ])->orderBy('id','desc')->get();
+        $user = Auth::guard('admin')->user();
+        $itemsQuery = SalesOrderItem::with([
+                    'salesOrder' => function ($q) {
+                        $q->select(
+                            'id',
+                            'zoho_salesorder_id',
+                            'salesorder_number',
+                            'project_id',
+                            'customer_id',
+                            'company_name'
+                        )->with([
+                            'project' => function ($q) {
+                                $q->select('id', 'name');
+                            },
+                            'invoices' => function ($q) {
+                                $q->select('id', 'sales_order_id')
+                                ->with([
+                                    'items' => function ($q) {
+                                        $q->select(
+                                            'id',
+                                            'invoice_id',
+                                            'item_id',
+                                            'quantity'
+                                        );
+                                    }
+                                ]);
+                            },
+                        ]);
+                    }
+                ]);
+            if (!in_array($user->user_role, ['Super Admin', 'admin'])) {
+                $itemsQuery->whereHas('salesOrder', fn($q) => $q->where('created_by_id', $user->zoho_user_id));
+            }
 
-        // dd($detail[2]);
-        return view('admin.dashboard.dashboard', compact('detail'));
+        $items = $itemsQuery->orderByDesc('id')->get();
+
+        $data = [
+            'total_projects' => Project::where('is_active', 1)->where('is_delete', 0)->count(),
+
+            'total_so_count' => SalesOrder::count(),
+
+            'total_so_amount' => SalesOrder::sum('total'),
+
+            'total_invoice_count' => SalesOrderInvoice::whereNotIn('status', ['draft','void','viewed'])->count(),
+
+            'total_invoice_amount' => SalesOrderInvoice::whereNotIn('status', ['draft','void','viewed'])->sum('total'),
+
+            'paid_invoice_count' => SalesOrderInvoice::where('status','paid')->count(),
+
+            'paid_invoice_amount' => SalesOrderInvoice::where('status','paid')->sum('total'),
+
+            'overdue_invoice_count' => SalesOrderInvoice::where('status','overdue')->count(),
+
+            'overdue_invoice_amount' => SalesOrderInvoice::where('status','overdue')->sum('balance'),
+        ];
+
+        return view('admin.dashboard.dashboard', compact('data', 'items'));
     }
 
     /**

@@ -2,8 +2,7 @@
 
 use App\Http\Controllers\CompanyRegisterController;
 use App\Http\Controllers\ZohoWebhookController;
-use App\Services\PerfiosService;
-use App\Services\ZohoBookService;
+use App\Http\Controllers\PerfiosWebhookController;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Request;
@@ -34,7 +33,6 @@ Route::get('/customer/{id}', function (ZohoBookService $zoho, $id) {
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 
-
 Route::prefix('company-register')->group(function () {
     Route::get('/invitation/{token}', [CompanyRegisterController::class, 'index'])->name('company.register');
     Route::post('/submit', [CompanyRegisterController::class, 'store'])->name('company.submit');
@@ -46,6 +44,6 @@ Route::get('vivasvanna-export', [CompanyRegisterController::class, 'welcome'])->
 
 ///////// || ZohoWebhook Controller || \\\\\\\\\\
 Route::post('/webhooks/zoho/{module}', [ZohoWebhookController::class, 'handle']);
-Route::post('/webhooks-perfios/GST_TRRN', [ZohoWebhookController::class, 'handle']);
-Route::post('/webhooks-perfios/BSN', [ZohoWebhookController::class, 'handle']);
 
+Route::post('/webhooks-perfios/gst_trrn', [PerfiosWebhookController::class, 'handleGstCallback'])->name('perfios.webhook.gst');
+Route::post('/webhooks-perfios/bsa',     [PerfiosWebhookController::class, 'handleBsaCallback'])->name('perfios.webhook.bsa');

@@ -38,6 +38,7 @@ class ZohoSyncTaxes extends Command
             $resp = $zoho->getAllTaxes([
                 'page'     => $page,
                 'per_page' => $perPage,
+                'sort_order' => "A"
             ]);
 
             $taxes = $resp['taxes'] ?? [];

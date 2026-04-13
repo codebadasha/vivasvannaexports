@@ -21,4 +21,5 @@ class DefaultResponse
             'errors'  => $errors,
         ];
     }
+    
 }

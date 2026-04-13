@@ -26,8 +26,6 @@
                                 <span style="color:red;float:right;" class="pull-right">* is mandatory</span>
                             </div>
 
-                            <input type="hidden" name="client_id" value="{{ Auth::guard('client')->user()->id }}" />
-
                             <div class="form-group mb-3">
                                 <label>Name <span class="mandatory">*</span></label>
                                 <input type="text" name="name" class="form-control" id="name" placeholder="Name" required>

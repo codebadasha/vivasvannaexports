@@ -62,7 +62,7 @@ class ZohoBookService
 
         if ($response->successful()) {
             $data = $response->json();
-            $expiresAt = now()->addSeconds($data['expires_in']);
+            $expiresAt = now()->addSeconds(3300);
             Log::info('Zoho token refreshed', [
                 'access_token' => $data['access_token'],
                 'expires_at' => $expiresAt,
@@ -142,7 +142,10 @@ class ZohoBookService
 
         $url = "{$this->apiUrl}/{$endpoint}?organization_id={$this->orgId}";
         $token = $this->getAccessToken();
-        $response = Http::withHeaders([
+        $response = Http::withOptions([
+            'verify' => false,
+            'timeout' => 30, // ⏰ increase timeout to 30 seconds
+        ])->retry(3, 2000)->withHeaders([
             'Authorization' => "Zoho-oauthtoken {$token}",
         ])->put($url, $data);
 
@@ -165,7 +168,10 @@ class ZohoBookService
         }
 
         $token = $this->getAccessToken();
-        $response = Http::withHeaders([
+        $response = Http::withOptions([
+            'verify' => false,
+            'timeout' => 30, // ⏰ increase timeout to 30 seconds
+        ])->retry(3, 2000)->withHeaders([
             'Authorization' => "Zoho-oauthtoken {$token}",
         ])->delete($url);
 
@@ -228,13 +234,44 @@ class ZohoBookService
         return $this->get("contacts", $params);
     }
 
-
     /**
      * Get details of a specific Customer
      */
     public function getCustomer(string $customerId): array
     {
         return $this->get("contacts/$customerId");
+    }
+
+    /**
+     * Create Contact details of a specific Customer
+     */
+    public function CreateCustomerContact(array $payload): array
+    {
+        return $this->post("contacts/contactpersons", $payload);
+    }
+
+    /**
+     * Update Contact details of a specific Customer
+     */
+    public function UpdateCustomerContact(string $contactPersonsId, array $payload): array
+    {
+        return $this->put("contacts/contactpersons/$contactPersonsId", $payload);
+    }
+
+    /**
+     * Delete Contact details of a specific Customer
+     */
+    public function DeleteCustomerContact(string $contactPersonsId): array
+    {
+        return $this->delete("contacts/contactpersons/$contactPersonsId");
+    }
+
+    /**
+     * set primary Contact details of a specific Customer
+     */
+    public function setPrimaryCustomerContact(string $contactPersonsId): array
+    {
+        return $this->post("contacts/contactpersons/$contactPersonsId/primary");
     }
 
     /**
@@ -245,7 +282,6 @@ class ZohoBookService
         $params['contact_type'] = 'vendor';
         return $this->get("contacts", $params);
     }
-
 
     /**
      * Get details of a specific Vendor
@@ -263,7 +299,6 @@ class ZohoBookService
         // $params["filter_by"] = "Status.Invoiced";
         return $this->get("salesorders", $params);
     }
-
 
     /**
      * Get details of a specific Vendor
@@ -285,11 +320,18 @@ class ZohoBookService
     /**
      * Get details of a specific Vendor
      */
-    public function getInvoices(string $salesorderId, array $params = [])
+    public function getInvoices(string $invoicesId, array $params = [])
     {
-        return $this->get("invoices/$salesorderId", $params);
+        return $this->get("invoices/$invoicesId", $params);
     }
 
+    /**
+     * Get details of a specific Vendor
+     */
+    public function getEwaybill(string $ewaybillId, array $params = [])
+    {
+        return $this->get("ewaybills/$ewaybillId", $params);
+    }
 
     /**
      * Get list of Vendor
@@ -299,7 +341,6 @@ class ZohoBookService
         $params["Status"] = "billed";
         return $this->get("purchaseorders", $params);
     }
-
 
     /**
      * Get details of a specific Vendor
@@ -324,7 +365,6 @@ class ZohoBookService
     {
         return $this->get("bills/$billId", $params);
     }
-
 
     public function getSalesOrderHtml(string $salesorderId, array $params = []): string
     {
@@ -423,6 +463,31 @@ class ZohoBookService
 
         return $response->body(); // PDF binary
     }
+    
+    public function getEwayBillPdf(string $ewaybillId): string
+    {
+        $params['accept'] = 'pdf';
+        $url = "ewaybills/$ewaybillId";
+
+        Log::info('Fetching Zoho Invoice PDF', ['invoice_id' => $ewaybillId]);
+
+        $token = $this->getAccessToken();
+
+        $response = Http::withOptions(['verify' => false])->withHeaders([
+            'Authorization' => "Zoho-oauthtoken {$token}",
+        ])->get("{$this->apiUrl}/{$url}?organization_id={$this->orgId}&" . http_build_query($params));
+
+        if (!$response->successful()) {
+            Log::error('Zoho Ewaybill PDF fetch failed', [
+                'ewaybill_id' => $ewaybillId,
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+            throw new \Exception('Failed to fetch Ewaybill PDF: ' . $response->status() . ' - ' . $response->body());
+        }
+
+        return $response->body(); // PDF binary
+    }
 
     public function getPurchaseOrderHtml(string $purchaseorderId, array $params = []): string
     {
@@ -473,8 +538,68 @@ class ZohoBookService
         return $response->body(); // PDF binary
     }
 
+    /**
+     * Get Document (Invoice / SalesOrder / PurchaseOrder etc.)
+     */
+    public function getDocument(string $type, string $id, string $documentId)
+    {
+        $endpoint = "{$type}/{$id}/documents/{$documentId}";
+
+        $url = "{$this->apiUrl}/{$endpoint}?organization_id={$this->orgId}";
+        
+        Log::info('Fetching Zoho Document', [
+            'type' => $type,
+            'id' => $id,
+            'document_id' => $documentId,
+            'url' => $url
+        ]);
+
+        $token = $this->getAccessToken();
+
+        $response = Http::withOptions([
+            'verify' => false,
+            'timeout' => 60,
+        ])->withHeaders([
+            'Authorization' => "Zoho-oauthtoken {$token}",
+        ])->get($url);
+
+        if (!$response->successful()) {
+            Log::error('Zoho Document Fetch Failed', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+
+            throw new \Exception(
+                'Zoho Document API failed: ' . $response->status() . ' - ' . $response->body()
+            );
+        }
+
+        return [
+            'body' => $response->body(),
+            'content_type' => $response->header('Content-Type')
+        ];
+    }
+
     public function createCustomer(array $payload): array
     {
         return $this->post("contacts", $payload);
     }
+
+    /**
+     * Get list of User
+     */
+    public function getAllUser(array $params = []): array
+    {
+        return $this->get("users", $params);
+    }
+
+    /**
+     * Get details of a specific User
+     */
+    public function getUser(string $userId): array
+    {
+        return $this->get("users/$userId");
+    }
+        
+    
 }

@@ -13,6 +13,8 @@ class VerifyCsrfToken extends Middleware
      */
     protected $except = [
         'api/test-validate-gstin',
-        'webhooks/zoho/*'
+        'webhooks/zoho/*',
+        'webhooks-perfios/bsa',
+        'webhooks-perfios/GST_TRRN',
     ];
 }

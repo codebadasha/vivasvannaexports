@@ -56,6 +56,9 @@
                                     <label>Company Name <span class="mandatory">*</span></label>
                                     <input type="text" name="company_name" class="form-control" id="companyName"
                                         placeholder="Director Name" required readonly value="{{ old('company_name') }}">
+                                    @error('company_name')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
                                 </div>
 
                                 <div class="form-group col-md-4 mb-3">
@@ -63,19 +66,28 @@
                                     <select name="director_name" class="form-control" id="directorName" required>
                                         <option value="">Select Director</option>
                                     </select>
+                                    @error('director_name')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
                                     <input type="hidden" name="directorsList" id="directorsList" value="{{ old('directorsList') }}">
                                 </div>
 
                                 <div class="form-group col-md-4 mb-3">
                                     <label>Email ID <span class="mandatory">*</span></label>
                                     <input type="email" name="email_id" class="form-control" id="email" placeholder="Email ID "
-                                        required readonly value="{{ old('email_id') }}">
+                                        required value="{{ old('email_id') }}">
+                                    @error('email')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
                                 </div>
 
                                 <div class="form-group col-md-4 mb-3">
                                     <label>Contact number <span class="mandatory">*</span></label>
                                     <input type="text" name="mobile_number" class="form-control numeric" id="mobileNumber"
-                                        placeholder="Contact number" required readonly value="{{ old('mobile_number') }}">
+                                        placeholder="Contact number" required value="{{ old('mobile_number') }}">
+                                    @error('mobile_number')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
                                 </div>
 
                                 <div class="form-group col-md-4 mb-3">
@@ -91,27 +103,10 @@
                                         <option value="">No Data Found</option>
                                         @endforelse
                                     </select>
+                                    @error('state_id')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
                                     <input type="hidden" name="state_id" value="{{ $oldState }}">
-                                </div>
-
-                                <div class="form-group col-md-4 mb-3">
-                                    <label>Password <span class="mandatory">*</span></label>
-                                    <div class="input-group">
-                                        <input type="password" name="password" id="password" class="form-control" placeholder="Enter Password">
-                                        <span class="input-group-text toggle-password" style="cursor:pointer;">
-                                            <i class="fa fa-eye"></i>
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div class="form-group col-md-4 mb-3">
-                                    <label>Confirm Password <span class="mandatory">*</span></label>
-                                    <div class="input-group">
-                                        <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" placeholder="Confirm Password">
-                                        <span class="input-group-text toggle-password" style="cursor:pointer;">
-                                            <i class="fa fa-eye"></i>
-                                        </span>
-                                    </div>
                                 </div>
 
                                 <div class="form-group col-md-4 mb-3">
@@ -126,108 +121,117 @@
                                         <option value="4" {{ $turnover == '4' ? 'selected' : '' }}>Between 500cr to 1000cr</option>
                                         <option value="5" {{ $turnover == '5' ? 'selected' : '' }}>Above 1000cr</option>
                                     </select>
+                                    @error('turnover')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
                                 </div>
 
                                 <div class="form-group col-md-8 mb-3">
                                     <label>Registered Address <span class="mandatory">*</span></label>
                                     <textarea class="form-control" name="address" placeholder="Registered Address"
                                         required readonly>{{ old('address') }}</textarea>
+                                    @error('address')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {{-- Authorized Person --}}
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="authorizedPerson">
-                                    <label>Authorized Person <span class="mandatory">*</span></label>
-                                    <span class="float-right">
-                                        <input type="checkbox" name="same_as_director" value="1" id="sameAsDirector"
-                                            {{ old('same_as_director') ? 'checked' : '' }}>&nbsp;&nbsp;Same as above
-                                    </span>
-
-                                    @php
-                                    $authorized = old('authorized', [['name'=>'','email'=>'','mobile'=>'']]);
-
-                                    @endphp
-                                    @foreach($authorized as $ak => $av)
-                                    <div class="row mb-3 authorized">
-                                        <div class="col-md-4">
-                                            <label>Name <span class="mandatory">*</span></label>
-                                            <input type="name" name="authorized[{{ $ak }}][name]" class="form-control"
-                                                value="{{ old("authorized.$ak.name") }}" @if($loop->first && old('same_as_director')) readonly @endif required placeholder="Enter Name">
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label>Email <span class="mandatory">*</span></label>
-                                            <input type="email" name="authorized[{{ $ak }}][email]" class="form-control"
-                                                value="{{ old("authorized.$ak.email") }}" @if($loop->first && old('same_as_director')) readonly @endif required placeholder="Enter Email">
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label>Mobile Number <span class="mandatory">*</span></label>
-                                            <input type="text" name="authorized[{{ $ak }}][mobile]"
-                                                class="form-control numeric" maxlength="10" minlength="10"
-                                                value="{{ old("authorized.$ak.mobile") }}" @if($loop->first && old('same_as_director')) readonly @endif required placeholder="Enter Mobile Number">
-                                        </div>
-                                        <div class="col-md-1 mt-4">
-                                            @if($loop->first)
-                                            <a href="javascript:void(0);" class="btn btn-primary mt-1 addAuthorizedPerson" data-id="1">
-                                                <i class="fa fa-plus"></i>
-                                            </a>
-                                            @else
-                                            <a href="javascript:void(0);" class="btn btn-danger mt-1 removeAuthorizedPerson">
-                                                <i class="fa fa-minus"></i>
-                                            </a>
-                                            @endif
-                                        </div>
-                                    </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Contact Person --}}
+                    
+                   {{-- Contact Person --}}
                     <div class="col-lg-12">
                         <div class="card">
                             <div class="card-body">
                                 <div class="contactPerson">
-                                    <label>Contact Person <span class="mandatory">*</span></label>
                                     @php
-                                    $contacts = old('contact', [['name'=>'','email'=>'','mobile'=>'']]);
+                                        $contactPersons = old('contact', [[
+                                                            'name' => '',
+                                                            'email' => '',
+                                                            'mobile' => '',
+                                                            'phone' => '',
+                                                            'designation' => ''
+                                                            ]]
+                                                        );
+                                        
                                     @endphp
-                                    @foreach($contacts as $ck => $cv)
-                                    <div class="row mb-3 contactperson">
-                                        <div class="col-md-4">
-                                            <label>Name <span class="mandatory">*</span></label>
-                                            <input type="text" name="contact[{{ $ck }}][name]" class="form-control"
-                                                value="{{ old("contact.$ck.name") }}" required placeholder="Enter Name">
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label>Email <span class="mandatory">*</span></label>
-                                            <input type="email" name="contact[{{ $ck }}][email]" class="form-control"
-                                                value="{{ old("contact.$ck.email") }}" required placeholder="Enter Email">
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label>Mobile Number <span class="mandatory">*</span></label>
-                                            <input type="text" name="contact[{{ $ck }}][mobile]"
-                                                class="form-control numeric" maxlength="10" minlength="10"
-                                                value="{{ old("contact.$ck.mobile") }}" required placeholder="Enter Mobile Number">
-                                        </div>
-                                        <div class="col-md-1 mt-4">
-                                            @if($loop->first)
-                                            <a href="javascript:void(0);" class="btn btn-primary mt-1 addContactPerson" data-id="1">
-                                                <i class="fa fa-plus"></i>
-                                            </a>
-                                            @else
-                                            <a href="javascript:void(0);" class="removeContactPerson btn btn-danger mt-1">
-                                                <i class="fa fa-trash"></i>
-                                            </a>
-                                            @endif
-                                        </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div>
+                                            <label class="mb-0">Contact Person <span class="mandatory">*</span></label>
+                                            @error("contact")
+                                                <br>
+                                                <span class="text-danger">{{ $message }}</span>
+                                            @enderror
+                                        </div>            
+                                        <span>
+                                            <input type="checkbox" name="same_as_director" value="1" id="sameAsDirector"
+                                                {{ old('same_as_director') ? 'checked' : '' }}>
+                                            &nbsp;&nbsp;Same as above
+                                        </span>
                                     </div>
-                                    @endforeach
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered align-middle" id="contactPersonTable">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th width="20%">Name <span class="mandatory">*</span></th>
+                                                    <th width="25%">Email <span class="mandatory">*</span></th>
+                                                    <th>Mobile <span class="mandatory">*</span></th>
+                                                    <th>Phone</th>
+                                                    <th>Designation</th>
+                                                    <th width="5%">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($contactPersons as $ak => $av)
+                                                <tr class="contactperson">
+                                                    <td>
+                                                        <input type="text" name="contact[{{ $ak }}][name]" class="form-control {{ !empty($av['contact_person_id']) ? 'contact-editable' : '' }}" placeholder="Name" value="{{ $av['name'] ?? '' }}" required>
+                                                        @error("contact.$ak.name")
+                                                            <span class="text-danger">{{ $message }}</span>
+                                                        @enderror
+                                                    </td>
+                                                    <td>
+                                                        <input type="email" name="contact[{{ $ak }}][email]" class="form-control {{ !empty($av['contact_person_id']) ? 'contact-editable' : '' }}" placeholder="Email" value="{{ $av['email'] ?? '' }}" required>
+                                                        @error("contact.$ak.email")
+                                                            <span class="text-danger">{{ $message }}</span>
+                                                        @enderror
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" name="contact[{{ $ak }}][mobile]" class="form-control numeric {{ !empty($av['contact_person_id']) ? 'contact-editable' : '' }}" maxlength="10" minlength="10" placeholder="Mobile" value="{{ $av['mobile'] ?? '' }}" required>
+                                                        @error("contact.$ak.mobile")
+                                                            <span class="text-danger">{{ $message }}</span>
+                                                        @enderror
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" name="contact[{{ $ak }}][phone]" class="form-control numeric {{ !empty($av['contact_person_id']) ? 'contact-editable' : '' }}" maxlength="10" minlength="10" placeholder="Phone" value="{{ $av['phone'] ?? '' }}">
+                                                        @error("contact.$ak.phone")
+                                                            <span class="text-danger">{{ $message }}</span>
+                                                        @enderror
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" name="contact[{{ $ak }}][designation]" class="form-control {{ !empty($av['contact_person_id']) ? 'contact-editable' : '' }}" placeholder="Designation" value="{{ $av['designation'] ?? '' }}">
+                                                        @error("contact.$ak.designation")
+                                                            <span class="text-danger">{{ $message }}</span>
+                                                        @enderror
+                                                    </td>
+                                                    <td class="text-center">
+                                                        @if(!$loop->first)
+                                                            <button type="button" class="btn btn-danger btn-sm contact-delete-btn" data-id="{{ $av['id'] ?? '' }}">
+                                                                <i class="fa fa-trash"></i>
+                                                            </button>
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="mt-3 text-left">
+                                        <button type="button" class="btn btn-primary addContactPerson">
+                                            <i class="fa fa-plus"></i> Add Contact
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

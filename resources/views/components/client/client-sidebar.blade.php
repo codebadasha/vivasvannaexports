@@ -9,7 +9,7 @@
                     </a>
                 </li>
 
-                @if(Auth::guard('client')->user()->is_active == 1)
+                @if(Auth::guard('client')->user()->is_active == 1 && Auth::guard('client')->user()->is_verify == 1)
 
                     <li>
                         <a href="{{ route('client.project.index') }}" class="">
@@ -22,16 +22,17 @@
                         </ul> -->
                     </li>
 
-                    <li>
-                        <a href="{{ route('client.boq.index') }}" class="">
+                    <!-- <li>
+                        <a href="#" class="">
                             <i class="bx bx-task"></i>
                             <span>BOQ</span>
-                        </a>
+                        </a> -->
+                        <!-- route('client.boq.index') -->
                         <!-- <ul class="sub-menu" aria-expanded="false">
-                            <li><a href="{{ route('client.boq.create') }}">Add BOQ</a></li>
-                            <li><a href="{{ route('client.boq.index') }}">All BOQs</a></li>
+                            <li><a href="route('client.boq.create')">Add BOQ</a></li>
+                            <li><a href="route('client.boq.index')">All BOQs</a></li>
                         </ul> -->
-                    </li>   
+                    <!-- </li> -->
 
                     <li>
                         <a href="{{ route('client.po.index') }}" class="waves-effect">
@@ -55,7 +56,7 @@
                     </li> -->
 
                     <li>
-                        <a href="{{ route('client.credit.add') }}" class="waves-effect">
+                        <a href="{{ route('client.credit.apply') }}" class="waves-effect">
                             <i class="bx bx-sort"></i>
                             <span>Apply For Credit</span>
                         </a>

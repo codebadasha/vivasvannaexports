@@ -23,6 +23,14 @@
         <div class="rightbar-overlay"></div>
         @include('components.investor.partials.footer_link')
         @yield('js')
+        <script>
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-center",
+                "timeOut": "5000"
+            };
+        </script>
         <script type="text/javascript">
             @if(Session::has('messages'))
                 $(document).ready(function() {

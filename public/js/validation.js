@@ -282,7 +282,8 @@ $(document).ready(function () {
             },
             new_password: {
                 required: true,
-                minlength: 8
+                minlength: 8,
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
             },
             confirm_password: {
                 required: true,
@@ -291,6 +292,17 @@ $(document).ready(function () {
             }
 
         },
+        errorPlacement: function (error, element) {
+
+            if (element.attr("type") === "password") {
+                // For password fields inside input-group
+                error.appendTo(element.closest(".form-group"));
+
+            } else {
+                // Default
+                error.insertAfter(element);
+            }
+        },
         messages: {
             old_password: {
                 required: "Please enter current password",
@@ -298,6 +310,7 @@ $(document).ready(function () {
             new_password: {
                 required: "Please enter new password",
                 minlength: "Your password must be at least 8 characters long",
+                pattern: "Password must contain at least 1 uppercase, 1 lowercase, 1 digit, and 1 special character"
             },
             confirm_password: {
                 required: "Please enter confirm new password",
@@ -988,9 +1001,20 @@ $(document).ready(function () {
         },
         errorPlacement: function (error, element) {
 
-            if (element.attr("name") == 'role_id') {
-                error.insertAfter('#role');
+            if (element.hasClass('select2-hidden-accessible')) {
+                // Find the Select2 container dynamically
+                const select2Container = element.next('.select2');
+                if (select2Container.length) {
+                    error.insertAfter(select2Container);
+                } else {
+                    error.insertAfter(element); // fallback
+                }
+            } else if (element.attr("name") === "password" || element.attr("name") === "password_confirmation") {
+                // For password fields inside input-group
+                error.appendTo(element.closest(".form-group"));
+
             } else {
+                // Default
                 error.insertAfter(element);
             }
         },

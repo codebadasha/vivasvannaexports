@@ -56,6 +56,7 @@ async function checkGst(gst) {
         $("input[type='hidden'][name='directorsList']").val(JSON.stringify(directorsList));
 
         // Set state dropdown
+        
         setSelectedState(data.state_id);
         $('#company-details').show();
         $("select[name='state_id']").select2();
@@ -85,12 +86,6 @@ $(document).on('input', '#gstn', function () {
 });
 
 function resetAuthorizedAndContact() {
-    // Reset Authorized Person
-    const $authWrapper = $(".authorizedPerson");
-    $authWrapper.find(".authorized").not(":first").remove(); // remove extra rows
-    $authWrapper.find(".authorized:first input").each(function () {
-        $(this).val("").prop("readonly", false);
-    });
 
     // Reset Contact Person
     const $contactWrapper = $(".contactPerson");
@@ -123,25 +118,38 @@ function populateDirectorDropdown(list, selected = '') {
     }
 }
 
+// ---------
 /**
  * Handle "Same as Director" checkbox toggle
  * Prefills first authorized person with director details if checked
  */
 function toggleSameAsDirector() {
     const selectedDirector = $('#directorName').val();
-    const $authName = $("input[name='authorized[0][name]']");
-    const $authEmail = $("input[name='authorized[0][email]']");
-    const $authMobile = $("input[name='authorized[0][mobile]']");
+    const emailId = $('#emailId').val();
+    const mobileNumber = $('#mobileNumber').val();
+    const $authName = $("input[name='contact[0][name]']");
+    const $authEmail = $("input[name='contact[0][email]']");
+    const $authMobile = $("input[name='contact[0][mobile]']");
 
     if ($('#sameAsDirector').is(':checked')) {
+
         if (!selectedDirector) {
-            toastr.warning("Please select a Director Name first.");
+            toastr.warning("Please select a Director Name first.");           
+        }
+        if (!emailId) {
+            toastr.warning("Please add a Email first.");
+        }
+        if (!mobileNumber) {
+            toastr.warning("Please add a mobile Number first.");
+        }
+        if(!selectedDirector || !emailId || !mobileNumber){
             $('#sameAsDirector').prop('checked', false);
             return;
         }
 
+
         $authName.val(selectedDirector).prop('readonly', true);
-        $authEmail.val($('#email').val()).prop('readonly', true);
+        $authEmail.val($('#emailId').val()).prop('readonly', true);
         $authMobile.val($('#mobileNumber').val()).prop('readonly', true);
 
     } else {
@@ -160,23 +168,108 @@ $(document).on('change', '#directorName', function () {
     if ($('#sameAsDirector').is(':checked') && selectedDirector) {
         toggleSameAsDirector();
     } else {
-        $("input[name='authorized[0][name]']").prop('readonly', false);;
-        $("input[name='authorized[0][email]']").prop('readonly', false);
-        $("input[name='authorized[0][mobile]']").prop('readonly', false);
+        $("input[name='contact[0][name]']").prop('readonly', false);;
+        $("input[name='contact[0][email]']").prop('readonly', false);
+        $("input[name='contact[0][mobile]']").prop('readonly', false);
     }
 });
 
 $('#sameAsDirector').on('change', toggleSameAsDirector);
 
-function setSelectedState(stateId) {
-    const $stateSelect = $("select[name='state_id']");
-    const $hiddenState = $("input[type='hidden'][name='state_id']");
 
-    if (String(stateId) !== $stateSelect.val()) {
-        $hiddenState.val(stateId);
+function setSelectedState(stateId) {
+
+    const $stateSelect = $("select[name='state_id']");
+    
+    // Remove existing hidden input first (important)
+    $("input[type='hidden'][name='state_id']").remove();
+
+    if (parseInt(stateId) === 0) {
+
+        // Enable select
+        $stateSelect.prop('disabled', false);
+
+        // Clear selection
+        $stateSelect.val('').trigger("change");
+
+    } else {
+
+        // Set selected value
         $stateSelect.val(stateId).trigger("change");
+
+        // Disable select
+        $stateSelect.prop('disabled', true);
+
+        // Append hidden input to submit value
+        $('<input>')
+            .attr('type', 'hidden')
+            .attr('name', 'state_id')
+            .val(stateId)
+            .appendTo('#addClientCompany');
     }
 }
+
+/* ------------------------------------------------------------------
+   Contact Person Management
+-------------------------------------------------------------------*/
+
+/**
+ * Add new contact person row
+ */
+function addContactPerson() {
+
+    const index = $("#contactPersonTable tbody tr").length;
+    const newRow = `
+        <tr class="contactperson">
+            <td>
+                <input type="hidden" name="contact[${index}][status]" value="add">
+
+                <input type="text" name="contact[${index}][name]" class="form-control">
+                <span class="error-text"></span>
+            </td>
+
+            <td>
+                <input type="email" name="contact[${index}][email]" class="form-control">
+                <span class="error-text"></span>
+            </td>
+
+            <td>
+                <input type="text" name="contact[${index}][mobile]" class="form-control">
+                <span class="error-text"></span>
+            </td>
+
+            <td>
+                <input type="text" name="contact[${index}][phone]" class="form-control">
+                <span class="error-text"></span>
+            </td>
+
+            <td>
+                <input type="text" name="contact[${index}][designation]" class="form-control">
+                <span class="error-text"></span>
+            </td>
+
+            <td>
+                <button type="button" class="btn btn-danger contact-delete-btn">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </td>
+        </tr>`;
+
+    $("#contactPersonTable tbody").append(newRow);
+}
+
+$(document).on("click", ".addContactPerson", addContactPerson);
+$(document).on("click", ".contact-delete-btn", function () {
+    removeContactPerson(this);
+});
+
+function removeContactPerson(el) {
+    $(el).closest(".contactperson").remove();
+}
+
+
+
+
 
 /* ------------------------------------------------------------------
    Authorized Person Management
@@ -212,54 +305,13 @@ function addAuthorizedPerson() {
     $(".authorizedPerson").append(newRow);
 }
 
+
 /**
  * Remove authorized person row
  * @param {HTMLElement} el
  */
 function removeAuthorizedPerson(el) {
     $(el).closest(".authorized").remove();
-}
-
-/* ------------------------------------------------------------------
-   Contact Person Management
--------------------------------------------------------------------*/
-
-/**
- * Add new contact person row
- */
-function addContactPerson() {
-    const index = $(".contactperson").length;
-
-    const newRow = `
-        <div class="row mb-3 contactperson">
-            <div class="col-md-4">
-                <label>Name <span class="mandatory">*</span></label>
-                <input type="text" name="contact[${index}][name]" class="form-control" placeholder="Enter Name" required>
-            </div>
-            <div class="col-md-4">
-                <label>Email <span class="mandatory">*</span></label>
-                <input type="email" name="contact[${index}][email]" class="form-control" placeholder="Enter Email" required>
-            </div>
-            <div class="col-md-3">
-                <label>Mobile Number <span class="mandatory">*</span></label>
-                <input type="text" name="contact[${index}][mobile]" class="form-control numeric" maxlength="10" minlength="10" placeholder="Enter Mobile Number" required>
-            </div>
-            <div class="col-md-1 mt-4">
-                <a href="javascript:void(0);" class="btn btn-danger mt-1 removeContactPerson">
-                    <i class="fa fa-minus"></i>
-                </a>
-            </div>
-        </div>`;
-
-    $(".contactPerson").append(newRow);
-}
-
-/**
- * Remove contact person row
- * @param {HTMLElement} el
- */
-function removeContactPerson(el) {
-    $(el).closest(".contactperson").remove();
 }
 
 /* ------------------------------------------------------------------
@@ -270,7 +322,4 @@ $(document).on("click", ".removeAuthorizedPerson", function () {
     removeAuthorizedPerson(this);
 });
 
-$(document).on("click", ".addContactPerson", addContactPerson);
-$(document).on("click", ".removeContactPerson", function () {
-    removeContactPerson(this);
-});
+

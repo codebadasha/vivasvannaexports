@@ -37,14 +37,14 @@
 
                             <div class="form-group mb-3">
                                 <label>Role<span class="mandatory">*</span></label>
-                                <input type="text" class="form-control" name="name" placeholder="Role" autocomplete="off" required/ value="{{ $role->name }}">
+                                <input type="text" class="form-control" name="name" placeholder="Role" autocomplete="off" required value="{{ $role->name }}" readonly>
                             </div>
 
                             <div class="form-group mb-3">
                                 <label class="control-label">Module Access<span class="mandatory">*</span></label>
-                                <span class="selectAllModule float-right"><input type="checkbox" class="moduleAccess">&nbsp;&nbsp;Select All Module</span>
                                 <select class="select2 form-control select2-multiple role_module" multiple="multiple" name="modules[]" id="role_modules" data-placeholder="Select Module(s)" required >
                                     @forelse ($modules as $mk => $mv)
+                                        @continue(in_array($mv->id, [11,9]))
                                         <option value="{{ $mv->id }}" @if(in_array($mv->id,$moduleId)) selected @endif>
                                             {{ $mv->name }}
                                         </option>

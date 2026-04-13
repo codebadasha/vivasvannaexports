@@ -10,6 +10,10 @@ use App\Models\ClientCompanyAuthorizedPerson;
 use App\Models\ClientCompanyContact;
 use App\Models\ClientInvestor;
 use App\Models\SalesOrderInvoice;
+use App\Models\InvestorClient;
+use App\Models\SalesOrderItem;
+use App\Models\Project;
+use App\Models\SalesOrder;
 use ZipArchive;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
@@ -23,29 +27,23 @@ class ClientCompanyController extends GlobalController
     public function __construct()
     {
         $this->middleware('investor');
-
-        if (Auth::guard('investor')->user()) {
-            $invClient = ClientInvestor::where('investor_id', Auth::guard('investor')->user()->id)->pluck('client_id')->toArray();
-            $this->investorclient = $invClient;
-        }
     }
 
     public function index()
     {
 
-        $invoices = SalesOrderInvoice::with('salesOrder.client')
-            ->where('investor_id', Auth::guard('investor')->user()->id)
-            ->whereNotIn('status', ['draft', 'void', 'viewed'])
-            ->orderBy('id', 'desc')
-            ->get();
+        $clients = Auth::guard('investor')
+                ->user()
+                ->clients()
+                ->select([
+                   'client_companies.id','company_name','director_name','gstn','pan_number','cin','cin_verify','msme_register','turnover','is_active','address','is_verify'
+                ])
+                ->with([
+                    'gstDetails:client_company_id,constitution_of_business'
+                ])
+                ->get();
 
-        $client = $invoices
-            ->pluck('salesOrder.client')   // get entire client model
-            ->filter()                     // remove nulls
-            ->unique('zoho_contact_id')    // unique by customer ID
-            ->values();
-
-        return view('investor.company.list', compact('client'));
+        return view('investor.company.list', compact('clients'));
     }
 
     public function downloadCompanyDocumentZip($companyId)
@@ -80,17 +78,59 @@ class ClientCompanyController extends GlobalController
     public function clientDashboard($clientId)
     {
 
-        $client = ClientCompany::where('id', base64_decode($clientId))->with(['contact'])->first();
+        $client = ClientCompany::where('id', base64_decode($clientId))->with(['contact', 'authorized'])->first();
+        $customerId = $client->zoho_contact_id;
+        $items = SalesOrderItem::query()
+                ->with([
+                    'salesOrder' => function ($q) {
+                        $q->select('id', 'zoho_salesorder_id', 'salesorder_number', 'project_id', 'customer_id')
+                        ->with([
+                            'project' => fn($q) => $q->select('id', 'name'),
+                            'invoices' => fn($q) => $q->select('id', 'sales_order_id')
+                                ->with(['items' => fn($q) => $q->select('id', 'invoice_id', 'item_id', 'quantity')])
+                        ]);
+                    }
+                ])
+                ->whereHas('salesOrder', fn($q) => $q->where('customer_id', $customerId))
+                ->orderByDesc('id')
+                ->get();
+        
+        $data = [
+            'total_projects' => Project::where('client_id', $client->id)
+                ->where('is_active', 1)
+                ->where('is_delete', 0)
+                ->count(),
 
-        $detail = PurchaseOrderItem::with(['po' => function ($q) {
-            $q->with(['project']);
-        }, 'varation' => function ($q) {
-            $q->with(['product']);
-        }])->whereHas('po', function ($q) use ($clientId) {
-            $q->where('client_id', base64_decode($clientId));
-        })->get();
+            'total_po_count' => SalesOrder::where('customer_id', $customerId)->count(),
 
-        return view('investor.company.dashboard', compact('client', 'detail'));
+            'total_po_amount' => SalesOrder::where('customer_id', $customerId)->sum('total'),
+
+            'total_invoice_count' => SalesOrderInvoice::where('customer_id', $customerId)
+                ->whereNotIn('status', ['draft','void','viewed'])
+                ->count(),
+
+            'total_invoice_amount' => SalesOrderInvoice::where('customer_id', $customerId)
+                ->whereNotIn('status', ['draft','void','viewed'])
+                ->sum('total'),
+
+            'paid_invoice_count' => SalesOrderInvoice::where('customer_id', $customerId)
+                ->where('status','paid')
+                ->count(),
+
+            'paid_invoice_amount' => SalesOrderInvoice::where('customer_id', $customerId)
+                ->where('status','paid')
+                ->sum('total'),
+
+            'overdue_invoice_count' => SalesOrderInvoice::where('customer_id', $customerId)
+                ->where('status','overdue')
+                ->count(),
+
+            'overdue_invoice_amount' => SalesOrderInvoice::where('customer_id', $customerId)
+                ->where('status','overdue')
+                ->sum('total'),
+        ];
+
+        return view('investor.company.dashboard', compact('client', 'items', 'data'));
     }
 
     public function getCompanyAuthorizedPerson(Request $request)

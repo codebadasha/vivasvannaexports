@@ -48,7 +48,13 @@
                                     <td>{{ \Carbon\Carbon::parse($ov->due_date)->format('d/m/Y') }}</td>
                                     <td>₹ {{ number_format($ov->total, 2, '.', ',') }}</td>
                                     <td>₹ {{ number_format($ov->balance, 2, '.', ',') }}</td>
-                                    <td>{{ $ov->ewaybill->ewaybill_id ?? '---' }}</td>
+                                    <td>
+                                        @if($ov->ewayBills)
+                                            <a href="javascript:void(0);" class="viewEwayBill" data-token="{{ csrf_token() }}" data-url="{{ route('client.invoice.ewaybill',base64_encode($ov->ewayBills->ewaybill_id)) }}">{{ $ov->ewayBills?->ewaybill_number }}</a>
+                                        @else
+                                            ---
+                                        @endif
+                                    </td>
                                     <td>
                                         <a href="javascript:void(0);"
                                             class="btn btn-primary waves-effect waves-light viewInvoiceBtn"
@@ -57,12 +63,61 @@
                                             <i class="fa fa-eye"></i>
                                         </a>
                                         <a href="javascript:void(0);"
-                                            class="btn btn-danger waves-effect waves-light downloadInvoiceBtn"
+                                            class="btn btn-primary waves-effect waves-light viewInvoiceBtn"
                                             data-id="{{ base64_encode($ov->invoice_id) }}"
-                                            role="button" title="Download PDF">
-                                            <i class="fa fa-download"></i>
+                                            role="button" title="View">
+                                            <i class="fa fa-eye"></i>
                                         </a>
-                                        
+                                        <div class="btn-group">
+                                            <button type="button" 
+                                                class="btn btn-danger dropdown-toggle waves-effect waves-light"
+                                                data-bs-toggle="dropdown" 
+                                                aria-expanded="false"
+                                                title="Download">
+                                                <i class="fa fa-download"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <a class="dropdown-item downloadInvoiceBtn"
+                                                    href="javascript:void(0);"
+                                                    data-id="{{ base64_encode($ov->invoice_id) }}">
+                                                        <i class="fa fa-file-pdf text-danger me-2"></i> Download Invoice PDF
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item downloadInvoiceZipBtn"
+                                                    href="javascript:void(0);"
+                                                    data-id="{{ base64_encode($ov->invoice_id) }}">
+                                                        <i class="fa fa-file-archive text-warning me-2"></i> Download All ZIP
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        @if(!empty($ov->documents) && count($ov->documents) > 0)
+                                            <div class="btn-group">
+                                                <button type="button" 
+                                                    class="btn btn-info dropdown-toggle waves-effect waves-light"
+                                                    data-bs-toggle="dropdown" 
+                                                    aria-expanded="false">
+                                                    <i class="fa fa-paperclip"></i>
+                                                </button>
+                                                <ul class="dropdown-menu" style="min-width: 250px;">
+                                                    @foreach($ov->documents as $index => $doc)
+                                                        <li>
+                                                            <a class="dropdown-item openDocument"
+                                                            href="javascript:void(0);"
+                                                            data-token="{{ csrf_token() }}"
+                                                            data-type="invoices"
+                                                            data-url="{{ route('client.po.openDocument') }}"
+                                                            data-id="{{ $ov->invoice_id }}"
+                                                            data-document-id="{{ $doc['document_id'] }}">
+                                                                {{ $doc['file_name'] }}
+                                                            </a>
+                                                        </li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        @endif
                                     </td>
                                 </tr>
                                 @endforeach
@@ -95,6 +150,7 @@
         </div>
     </div>
 </div>
+@include('inc.documentModal')
 @endsection
 @section('js')
 
@@ -124,11 +180,40 @@
         });
     });
 
+   
+</script>
+<script>
     $(document).on('click', '.downloadInvoiceBtn', function() {
         let invoiceId = $(this).data('id');
-        let url = "{{ route('client.po.invoicedownload', ['id' => ':id']) }}";
+        let url = "{{ route('client.so.invoicedownload', ['id' => ':id']) }}";
         url = url.replace(':id', invoiceId);
-        window.open(url, '_blank'); // open PDF in new tab or trigger browser download
+
+        window.open(url, '_blank');
+    });
+
+    $(document).on('click', '.downloadInvoiceZipBtn', function() {
+        let invoiceId = $(this).data('id');
+        let url = "{{ route('client.so.invoicezip', ['id' => ':id']) }}";
+        url = url.replace(':id', invoiceId);
+
+        Swal.fire({
+            title: 'Please Wait...',
+            text: 'Preparing ZIP file...',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        let iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = url;
+        document.body.appendChild(iframe);
+
+        setTimeout(() => {
+            Swal.close();
+        }, 2500);
     });
 </script>
 

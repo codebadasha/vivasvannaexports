@@ -15,168 +15,125 @@
                 </div>
             </div>
         </div>
-        @if(Auth::guard('client')->user()->is_active == 0)
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-
-                {{-- Success Card --}}
-                <div class="card shadow-lg border-0 rounded-3">
-                    <div class="card-body text-center p-5">
-                        <div class="mb-4">
-                            <i class="fa fa-ban text-danger" style="font-size:80px;"></i>
-                        </div>
-
-                        {{-- Heading --}}
-                        <h2 class="fw-bold text-dark mb-3">Account Deactivated</h2>
-
-                        {{-- Message --}}
-                        <p class="text-muted mb-4">
-                            Your company account with
-                            <span class="fw-semibold text-primary">Vivasvanna Exports</span>
-                            has been <span class="fw-semibold text-danger">deactivated</span>.<br>
-                            Please contact our support team for assistance in reactivating your account.
-                        </p>
-
-                        {{-- Support Info --}}
-                        <div class="mt-4">
-                            <p class="mb-1">
-                                <i class="fa fa-phone-alt text-primary me-2"></i>
-                                Support: <a href="tel:+919876543210">+91 98765 43210</a>
-                            </p>
-                            <p class="mb-0">
-                                <i class="fa fa-envelope text-primary me-2"></i>
-                                Email: <a href="mailto:info@ratnamaniindustries.com">info@ratnamaniindustries.com</a>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        @else
         <div class="row">
             <div class="col-xl-12">
                 <div class="row">
                     <div class="col-md-4">
-                        <div class="card mini-stats-wid">
-                            <div class="card-body">
-                                <div class="d-flex">
-                                    <div class="flex-grow-1">
-                                        <p class="text-muted fw-medium">Total Projects</p>
-                                        <h4 class="mb-0"><a href="{{ route('client.project.index') }}?client={{ Auth::guard('client')->user()->id }}">{{ \App\Models\Project::where('client_id',Auth::guard('client')->user()->id)->where('is_active',1)->where('is_delete',0)->count() }}</a></h4>
-                                    </div>
+                        <div class="card mini-stats-wid" style="height: -webkit-fill-available;">
+                            <a href="{{ route('client.project.index') }}">
+                                <div class="card-body">
+                                    <div class="d-flex">
+                                        <div class="flex-grow-1">
+                                            <p class="text-muted fw-medium">Total Projects</p>
+                                            <h4 class="mb-0">{{ $data['total_projects']}}</h4>
+                                        </div>
 
-                                    <div class="flex-shrink-0 align-self-center">
-                                        <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
-                                            <span class="avatar-title">
-                                                <i class="bx bx-copy-alt font-size-24"></i>
-                                            </span>
+                                        <div class="flex-shrink-0 align-self-center">
+                                            <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
+                                                <span class="avatar-title rounded-circle bg-primary">
+                                                    <i class="bx bx-copy-alt font-size-24"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{{ route('client.po.index') }}">
+                            <div class="card mini-stats-wid">
+                                <div class="card-body">
+                                    <div class="d-flex">
+                                        <div class="flex-grow-1">
+                                            <p class="text-muted fw-medium">Total Purchase Orders</p>
+                                            <h4 class="mb-0">{{ $data['total_po_count'] }}</h4>
+                                            <h5 class="mb-0">₹ {{ number_format($data['total_po_amount'], 2, '.', ',') }}</h5>
+                                        </div>
+
+                                        <div class="flex-shrink-0 align-self-center ">
+                                            <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
+                                                <span class="avatar-title rounded-circle bg-primary">
+                                                    <i class="bx bx-archive-in font-size-24"></i>
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                     <div class="col-md-4">
-                        <div class="card mini-stats-wid">
-                            <div class="card-body">
-                                <div class="d-flex">
-                                    <div class="flex-grow-1">Total PO Amount</p>
-                                        <h4 class="mb-0"><a href="#?client={{ Auth::guard('client')->user()->id }}">₹ {{ number_format(\App\Models\SalesOrder::where('customer_id', Auth::guard('client')->user()->zoho_contact_id)->sum('total'), 2, '.', ',') }}</a></h4>
-                                    </div>
+                        <a href="{{ route('client.invoice.index') }}">
+                            <div class="card mini-stats-wid">
+                                <div class="card-body">
+                                    <div class="d-flex">
+                                        <div class="flex-grow-1">
+                                            <p class="text-muted fw-medium">Total Invoices Raised</p>
+                                            <h4 class="mb-0">{{ $data['total_invoice_count'] }}</h4>
+                                            <h5 class="mb-0">₹ {{ number_format($data['total_invoice_amount'], 2, '.', ',') }}</h5>
+                                        </div>
 
-                                    <div class="flex-shrink-0 align-self-center ">
-                                        <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
-                                            <span class="avatar-title rounded-circle bg-primary">
-                                                <i class="bx bx-archive-in font-size-24"></i>
-                                            </span>
+                                        <div class="flex-shrink-0 align-self-center">
+                                            <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
+                                                <span class="avatar-title rounded-circle bg-primary">
+                                                    <i class="bx bx-purchase-tag-alt font-size-24"></i>
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                     <div class="col-md-4">
-                        <div class="card mini-stats-wid">
-                            <div class="card-body">
-                                <div class="d-flex">
-                                    <div class="flex-grow-1">
-                                        <p class="text-muted fw-medium">Total Invoice Raised</p>
-                                        <h4 class="mb-0"><a href="{{ route('client.invoice.index') }}?client={{ Auth::guard('client')->user()->id }}">₹ {{ number_format(\App\Models\SalesOrderInvoice::wherehas('salesOrder',function($q) { $q->where('customer_id',Auth::guard('client')->user()->zoho_contact_id); })->sum('total'), 2, '.', ',') }}</a></h4>
-                                    </div>
+                        <a href="{{ route('client.invoice.index', ['status' => 1]) }}">
+                            <div class="card mini-stats-wid">
+                                <div class="card-body">
+                                    <div class="d-flex">
+                                        <div class="flex-grow-1">
+                                            <p class="text-muted fw-medium">Paid Invoices</p>
+                                            <h4 class="mb-0">{{ $data['paid_invoice_count'] }}</h4>
+                                            <h5 class="mb-0">₹ {{ number_format($data['paid_invoice_amount'], 2, '.', ',') }}</h5>
+                                        </div>
 
-                                    <div class="flex-shrink-0 align-self-center">
-                                        <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
-                                            <span class="avatar-title rounded-circle bg-primary">
-                                                <i class="bx bx-purchase-tag-alt font-size-24"></i>
-                                            </span>
+                                        <div class="flex-shrink-0 align-self-center">
+                                            <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
+                                                <span class="avatar-title rounded-circle bg-primary">
+                                                    <i class="bx bx-purchase-tag-alt font-size-24"></i>
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                     <div class="col-md-4">
-                        <div class="card mini-stats-wid">
-                            <div class="card-body">
-                                <div class="d-flex">
-                                    <div class="flex-grow-1">
-                                        <p class="text-muted fw-medium">Total Invoice Paid</p>
-                                        <h4 class="mb-0"><a href="{{ route('client.invoice.index') }}?client={{ Auth::guard('client')->user()->id }}">{{ \App\Models\SalesOrderInvoice::where('status','paid')->wherehas('salesOrder',function($q) { $q->where('customer_id',Auth::guard('client')->user()->zoho_contact_id); })->count() }}</a></h4>
-                                    </div>
+                        <a href="{{ route('client.invoice.index', ['status' => 3]) }}">
+                            <div class="card mini-stats-wid">
+                                <div class="card-body">
+                                    <div class="d-flex">
+                                        <div class="flex-grow-1">
+                                            <p class="text-muted fw-medium">Overdue Invoices</p>
+                                            <h4 class="mb-0">{{ $data['overdue_invoice_count'] }}</h4>
+                                            <h5 class="mb-0">₹ {{ number_format($data['overdue_invoice_amount'], 2, '.', ',') }}</h5>
+                                        </div>
 
-                                    <div class="flex-shrink-0 align-self-center">
-                                        <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
-                                            <span class="avatar-title rounded-circle bg-primary">
-                                                <i class="bx bx-purchase-tag-alt font-size-24"></i>
-                                            </span>
+                                        <div class="flex-shrink-0 align-self-center">
+                                            <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
+                                                <span class="avatar-title rounded-circle bg-primary">
+                                                    <i class="bx bx-purchase-tag-alt font-size-24"></i>
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                     <div class="col-md-4">
-                        <div class="card mini-stats-wid">
-                            <div class="card-body">
-                                <div class="d-flex">
-                                    <div class="flex-grow-1">
-                                        <p class="text-muted fw-medium">Total Received Payment</p>
-                                        <h4 class="mb-0"><a href="{{ route('client.invoice.index') }}?client={{ Auth::guard('client')->user()->id }}">₹ {{ number_format(\App\Models\SalesOrderInvoice::where('status','paid')->wherehas('salesOrder',function($q) { $q->where('customer_id',Auth::guard('client')->user()->zoho_contact_id); })->sum('total'), 2, '.', ',') }}</a></h4>
-                                    </div>
-
-                                    <div class="flex-shrink-0 align-self-center">
-                                        <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
-                                            <span class="avatar-title rounded-circle bg-primary">
-                                                <i class="bx bx-purchase-tag-alt font-size-24"></i>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card mini-stats-wid">
-                            <div class="card-body">
-                                <div class="d-flex">
-                                    <div class="flex-grow-1">
-                                        <p class="text-muted fw-medium">Over Due Amount</p>
-                                        <h4 class="mb-0"><a href="{{ route('client.invoice.index') }}?client={{ Auth::guard('client')->user()->id }}">₹ {{ number_format(\App\Models\SalesOrderInvoice::whereDate('status','overdue')->wherehas('salesOrder',function($q) { $q->where('customer_id',Auth::guard('client')->user()->zoho_contact_id); })->sum('total'), 2, '.', ',') }}</a></h4>
-                                    </div>
-
-                                    <div class="flex-shrink-0 align-self-center">
-                                        <div class="avatar-sm rounded-circle bg-primary mini-stat-icon">
-                                            <span class="avatar-title rounded-circle bg-primary">
-                                                <i class="bx bx-purchase-tag-alt font-size-24"></i>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card mini-stats-wid">
+                        <div class="card mini-stats-wid" style="height: -webkit-fill-available;">
                             <div class="card-body">
                                 <div class="d-flex">
                                     <div class="flex-grow-1">
@@ -208,35 +165,51 @@
                                     <th>Project</th>
                                     <th>PO Number</th>
                                     <th>Item</th>
-                                    <th>BOQ Qty</th>
                                     <th>PO Qty</th>
                                     <th>Delivered Qty</th>
-                                    <th class='notexport'>Remaining Qty</th>
+                                    <th>Remaining Qty</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @if(!is_null($detail))
-                                @foreach($detail as $ok => $ov)
-                                <tr>
-                                    <td>{{ $loop->iteration }}</td>
-                                    <td>{{ !is_null($ov->salesOrder) && !is_null($ov->salesOrder->client) ? $ov->salesOrder->client->company_name : '--' }}</td>
-                                    <td>{{ !is_null($ov->salesOrder) ? $ov->salesOrder->salesorder_number : '--' }}</td>
-                                    <td>{{ !is_null($ov->product) ? $ov->product->name : '---' }}</td>
-                                    <td>{{ $ov->remaining_boq_qty ? 'yes' : '---'}}</td>
-                                    <td>{{ intval($ov->quantity) }} {{$ov->unit}}</td>
-                                    <td>Coming Soon</td>
-                                    <td>Coming Soon</td>
-                                </tr>
-                                @endforeach
+                               @if($items->isNotEmpty())
+                                    @foreach($items as $item)
+                                    <tr>
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td>
+                                            {{ $item->salesOrder?->project?->name ?? '---' }}
+                                        </td>
+                                        <td>
+                                            {{ $item->salesOrder?->salesorder_number ?? '--' }}
+                                        </td>
+                                        <td>
+                                            {{ $item->name ?? '---' }}
+                                        </td>
+                                        <td>
+                                            {{ intval($item->quantity) }} {{ $item->unit ?? '' }}
+                                        </td>
+                                        <td>
+                                            {{ number_format($item->delivered_quantity, 2) }} {{ $item->unit ?? '' }}
+                                        </td>
+                                        <td>
+                                            @php
+                                                $delivered = $item->delivered_quantity;
+                                                $remaining = max(0, $item->quantity - $delivered);
+                                            @endphp
+                                            {{ number_format($remaining, 2) }} {{ $item->unit ?? '' }}
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                @else
+                                    <tr>
+                                        <td colspan="7" class="text-center">No records found</td>
+                                    </tr>
                                 @endif
                             </tbody>
                         </table>
                     </div>
                 </div>
-            </div> <!-- end col -->
-        </div> <!-- end row -->
-
-        @endif
+            </div>
+        </div>
     </div>
 </div>
 
@@ -251,7 +224,7 @@
 
             <div class="modal-body text-center pt-0 pb-4 mb-3">
                 <h2 class="fw-bold mb-2 text-success">Your Credit Options Await</h2>
-                @if(empty($kycDetails->cin) && $kycDetails->cin_verify == 0 && in_array($kycDetails->gstDetails->constitution_of_business, ['Proprietorship', 'Partnership']))
+                @if((empty($kycDetails->cin) || $kycDetails->cin_verify == 0) && in_array($kycDetails->gstDetails->constitution_of_business, ['Proprietorship', 'Partnership']))
 
                 <p class="lead mb-4">
                     Please complete your KYC to unlock your company’s credit facilities and access funding.
@@ -274,17 +247,15 @@
                 </h3>
                 @endif -->
                 <!-- CTA Button -->
-                @if(empty($kycDetails->cin) && $kycDetails->cin_verify == 0 && in_array($kycDetails->gstDetails->constitution_of_business, ['Proprietorship', 'Partnership']))
+                @if((empty($kycDetails->cin) || $kycDetails->cin_verify == 0) && !in_array($kycDetails->gstDetails->constitution_of_business, ['Proprietorship', 'Partnership']))
                 <a href="{{ route('client.editCompanyProfile') }}" class="btn btn-lg btn-primary px-5">
                     Complete KYC
                 </a>
                 @else
-                <a href="{{ route('client.credit.add') }" class="btn btn-lg btn-primary px-5">
+                <a href="{{ route('client.credit.apply') }}" class="btn btn-lg btn-primary px-5">
                     Apply For credit
                 </a>
                 @endif
-
-
                 <!-- Optional Decline -->
                 <div class="mt-3">
                     <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal" aria-label="Close">No Thanks</button>
@@ -364,7 +335,7 @@
 </div>
 @endsection
 @section('js')
-@if($kycDetails->is_terms_accepted == 0)
+@if($kycDetails->is_terms_accepted == 0 && $kycDetails->is_verify == 1 && $kycDetails->is_active == 1)
 <script type="text/javascript">
     $(document).ready(function() {
         $('#termsAndCondition').modal({
@@ -374,7 +345,7 @@
         $('#termsAndCondition').modal('show');
     })
 </script>
-@elseif($kycDetails->is_auto_password == 1)
+@elseif($kycDetails->is_auto_password == 1 && $kycDetails->is_verify == 1 && $kycDetails->is_active == 1)
 <script type="text/javascript">
     $(document).ready(function() {
         $('#changePassword').modal({
@@ -397,7 +368,7 @@
                 backdrop: 'static',
                 keyboard: true
             });
-            $('.creditModal').modal('show');
+           $('.creditModal').modal('show');
             localStorage.setItem(`creditModal_lastShown_${id}`, today);
         }
     });

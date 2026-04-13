@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\CreditRequest;
 use ZipArchive;
+use Illuminate\Support\Facades\Log;
+use App\Helpers\MailHelper;
 
 class CreditController extends Controller
 {
@@ -13,68 +15,126 @@ class CreditController extends Controller
         $this->middleware('admin');
     }
 
-    public function index(Request $request){
-
+    public function index(Request $request)
+    {
         $filter = 0;
 
         $query = CreditRequest::query();
 
         if(isset($request->client) && $request->client != ''){
             $filter = 1;
-            $query->where('client_id',$request->client);
+            $query->where('client_company_id',$request->client);
         }
 
         if(isset($request->po_start_date) && $request->po_start_date != ''){
             $filter = 1;
-            $query->whereBetween(\DB::raw('date(created_at)'),[date('Y-m-d',strtotime(str_replace('/','-',trim($request->po_start_date)))),date('Y-m-d',strtotime(str_replace('/','-',trim($request->po_end_date))))]);
+
+            $start = date('Y-m-d',strtotime(str_replace('/','-',trim($request->po_start_date))));
+            $end   = date('Y-m-d',strtotime(str_replace('/','-',trim($request->po_end_date))));
+
+            $query->whereBetween(\DB::raw('date(created_at)'),[$start,$end]);
         }
 
-        $list = $query->with(['client'])->orderBy('id','desc')->get();
+        $list = $query->with([
+            'client:id,company_name,gstn,pan_number',
+
+            'bankReport' => function ($q) {
+                $q->select(
+                    'id',
+                    'credit_request_id',
+                    'bank_id',
+                    'upload_filepath',
+                    'report_file_path',
+                    'status',
+                    'reason'
+                )->with('bank:perfios_institution_id,name');
+            },
+
+            'gstReport' => function ($q) {
+                $q->select(
+                    'id',
+                    'credit_request_id',
+                    'local_excexlfilepath',
+                    'local_pdffilepath',
+                    'status',
+                    'reason'
+                );
+            },
+
+            'balanceSheets' => function ($q) {
+                $q->select('id','credit_request_id','year','filepath');
+            }
+
+        ])
+        ->where('status','!=','document_pending')
+        ->orderByDesc('id')
+        ->get();
 
         return view('admin.credit.list',compact('list','filter'));
     }
 
-    public function viewCreditForm($id){
+    public function approve($id)
+    {
+        $credit = CreditRequest::findOrFail(base64_decode($id));
 
-        $creditRequest = CreditRequest::where('id',base64_decode($id))->with(['client','sheet','statement'])->first();
+        $credit->update([
+            'status' => 'approved'
+        ]);
+        try {
+            $client = ClientCompany::where('id', $credit->client_company_id)->first();
 
-        return view('admin.credit.view_credit_form',compact('creditRequest'));
+            $subject = 'Congratulations! Your credit is Approved';
+            $viewFile = 'mail-template.credit-approved';
 
+            $response = MailHelper::send(
+                $client->email,
+                $subject,
+                $viewFile,
+            );
+
+            if (!$response['status']) {
+                Log::error("credit request Approved mail failed for {$client->email}: " . $response['message']);
+            } else {
+                Log::info("credit request Approved mail sent to {$client->email}");
+            }
+
+        } catch (\Throwable $e) {
+            Log::error("credit request Approved mail error: " . $e->getMessage());
+        }
+
+        return redirect()->back()->with('messages', [['type' => 'success', 'message' => 'Credit request approved successfully',]]);
     }
+        
+        
+        public function reject($id)
+        {
+            $credit = CreditRequest::findOrFail(base64_decode($id));
 
-    public function downloadCreditDocument($id){
+            $credit->update([
+                'status' => 'rejected'
+            ]);
+            try {
+                $client = ClientCompany::where('id', $credit->client_company_id)->first();
 
-        $document = CreditRequest::where('id',base64_decode($id))->with(['sheet','statement'])->first();
+                $subject = 'Request Not Approved';
+                $viewFile = 'mail-template.credit-rejected';
 
-        $files = array();
+                $response = MailHelper::send(
+                    $client->email,
+                    $subject,
+                    $viewFile,
+                );
 
-        if(!is_null($document->sheet)){
-            foreach($document->sheet as $sk => $sv){
-                $files[] = public_path('uploads/balance_sheet/'.$sv->file);
+                if (!$response['status']) {
+                    Log::error("credit request rejected mail failed for {$client->email}: " . $response['message']);
+                } else {
+                    Log::info("credit request rejected mail sent to {$client->email}");
+                }
+
+            } catch (\Throwable $e) {
+                Log::error("credit request rejected mail error: " . $e->getMessage());
             }
+
+            return redirect()->back()->with('messages', [['type' => 'success', 'message' => 'Credit request rejected successfully',]]);
         }
-
-        if(!is_null($document->statement)){
-            foreach($document->statement as $sk => $sv){
-                $files[] = public_path('uploads/bank_statement/'.$sv->bank_statement);
-            }
-        }
-
-
-
-        $zip = new ZipArchive;
-        $zipFileName = date('dmyhis').".zip";
-        $zipFilePath = storage_path($zipFileName);
-
-        if ($zip->open($zipFilePath, ZipArchive::CREATE) === true) {
-            // Add files to the ZIP file
-            foreach ($files as $file) {
-                $zip->addFile($file, basename($file));
-            }
-
-            $zip->close();
-        }
-
-        return \Response::download($zipFilePath)->deleteFileAfterSend(true);
-    }
 }

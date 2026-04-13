@@ -1,8 +1,8 @@
 <script src="{{ asset('app/js/vendor.js') }}"></script>
 <script src="{{ asset('app/js/main.js') }}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-<script src="{{ asset('backend/js/jquery.validate.min.js') }}"></script>
-<script src="{{ asset('app/js/validation.js') }}"></script>
+<script src="{{ asset('js/jquery.validate.min.js') }}"></script>
+<script src="{{ asset('js/validation.js') }}"></script>
 <script src="{{ asset('app/js/barrating.js') }}"></script>
 @if(Route::is('kyc'))
 	<script src="https://cdn.withpersona.com/dist/persona-v4.8.0.js"></script>

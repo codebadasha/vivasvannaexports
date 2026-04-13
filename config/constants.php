@@ -5,27 +5,31 @@
 			1 => [
 				'name' => 'Role',
 				'action' => [
-					'add' => [
-						'name' => 'Add',
-						'selected' => false,
-					],
-					'edit' => [
-						'name' => 'Edit',
-						'selected' => false,
-					],
-					'delete' => [
-						'name' => 'Delete',
-						'selected' => false,
-					],
 					'list' => [
 						'name' => 'List',
 						'selected' => true,
 					],
+					// 'add' => [
+					// 	'name' => 'Add',
+					// 	'selected' => false,
+					// ],
+					'edit' => [
+						'name' => 'Edit',
+						'selected' => false,
+					],
+					// 'delete' => [
+					// 	'name' => 'Delete',
+					// 	'selected' => false,
+					// ],
 				]
 			],
 			2 => [
 				'name' => 'Investor',
 				'action' => [
+					'list' => [
+						'name' => 'List',
+						'selected' => true,
+					],
 					'add' => [
 						'name' => 'Add',
 						'selected' => false,
@@ -37,16 +41,16 @@
 					'delete' => [
 						'name' => 'Delete',
 						'selected' => false,
-					],
-					'list' => [
-						'name' => 'List',
-						'selected' => true,
 					],
 				]
 			],
 			3 => [
 				'name' => 'Supplier Company',
 				'action' => [
+					'list' => [
+						'name' => 'List',
+						'selected' => true,
+					],
 					'add' => [
 						'name' => 'Add',
 						'selected' => false,
@@ -58,10 +62,6 @@
 					'delete' => [
 						'name' => 'Delete',
 						'selected' => false,
-					],
-					'list' => [
-						'name' => 'List',
-						'selected' => true,
 					],
 					'authorized' => [
 						'name' => 'Authorized Person',
@@ -72,24 +72,28 @@
 			4 => [
 				'name' => 'Team',
 				'action' => [
-					'add' => [
-						'name' => 'Add',
-						'selected' => false,
-					],
-					'edit' => [
-						'name' => 'Edit',
-						'selected' => false,
-					],
-					'delete' => [
-						'name' => 'Delete',
-						'selected' => false,
-					],
 					'list' => [
 						'name' => 'List',
 						'selected' => true,
 					],
+					// 'add' => [
+					// 	'name' => 'Add',
+					// 	'selected' => false,
+					// ],
+					'edit' => [
+						'name' => 'Edit',
+						'selected' => false,
+					],
+					// 'delete' => [
+					// 	'name' => 'Delete',
+					// 	'selected' => false,
+					// ],
 					'status' =>  [
 						'name' => 'Status',
+						'selected' => false,
+					],
+					'sync-team-member' =>  [
+						'name' => 'Sync zoho Team Member',
 						'selected' => false,
 					],
 				]
@@ -97,6 +101,10 @@
 			5 => [
 				'name' => 'Client Company',
 				'action' => [
+					'list' => [
+						'name' => 'List',
+						'selected' => true,
+					],
 					'add' => [
 						'name' => 'Add',
 						'selected' => false,
@@ -105,14 +113,14 @@
 						'name' => 'Edit',
 						'selected' => false,
 					],
-					'delete' => [
-						'name' => 'Delete',
+					'view' => [
+						'name' => 'View',
 						'selected' => false,
 					],
-					'list' => [
-						'name' => 'List',
-						'selected' => true,
-					],
+					// 'delete' => [
+					// 	'name' => 'Delete',
+					// 	'selected' => false,
+					// ],
 					'verify' => [
 						'name' => 'Verify',
 						'selected' => false,
@@ -121,10 +129,10 @@
 						'name' => 'Dashboard',
 						'selected' => false,
 					],
-					'download' => [
-						'name' => 'Download',
-						'selected' => false,
-					],
+					// 'download' => [
+					// 	'name' => 'Download',
+					// 	'selected' => false,
+					// ],
 					'setting' => [
 						'name' => 'Settings',
 						'selected' => false,
@@ -137,44 +145,48 @@
 						'name' => 'Users',
 						'selected' => false,
 					],
+					'status' => [
+						'name' => 'Status',
+						'selected' => false,
+					],
 				]
 			],
 			6 => [
 				'name' => 'Product',
 				'action' => [
-					'add' => [
-						'name' => 'Add',
-						'selected' => false,
-					],
-					'edit' => [
-						'name' => 'Edit',
-						'selected' => false,
-					],
-					'delete' => [
-						'name' => 'Delete',
-						'selected' => false,
-					],
 					'list' => [
 						'name' => 'List',
 						'selected' => true,
 					],
+					// 'add' => [
+					// 	'name' => 'Add',
+					// 	'selected' => false,
+					// ],
+					// 'edit' => [
+					// 	'name' => 'Edit',
+					// 	'selected' => false,
+					// ],
+					// 'delete' => [
+					// 	'name' => 'Delete',
+					// 	'selected' => false,
+					// ],
 				]
 			],
 			7 => [
 				'name' => 'Po Module',
 				'action' => [
-					'add' => [
-						'name' => 'Add',
-						'selected' => false,
-					],
-					'edit' => [
-						'name' => 'Edit',
-						'selected' => false,
-					],
-					'delete' => [
-						'name' => 'Delete',
-						'selected' => false,
-					],
+					// 'add' => [
+					// 	'name' => 'Add',
+					// 	'selected' => false,
+					// ],
+					// 'edit' => [
+					// 	'name' => 'Edit',
+					// 	'selected' => false,
+					// ],
+					// 'delete' => [
+					// 	'name' => 'Delete',
+					// 	'selected' => false,
+					// ],
 					'list' => [
 						'name' => 'List',
 						'selected' => true,
@@ -183,19 +195,31 @@
 						'name' => 'View PO',
 						'selected' => false,
 					],
-					'supplier' => [
-						'name' => 'Assign supplier',
+					'download' => [
+						'name' => 'Download PO',
 						'selected' => false,
 					],
-					'invoice' => [
-						'name' => 'Upload Invoice',
+					'view-document' => [
+						'name' => 'View Document',
 						'selected' => false,
 					],
+					// 'supplier' => [
+					// 	'name' => 'Assign supplier',
+					// 	'selected' => false,
+					// ],
+					// 'invoice' => [
+					// 	'name' => 'Upload Invoice',
+					// 	'selected' => false,
+					// ],
 				]
 			],
 			8 => [
 				'name' => 'Project',
 				'action' => [
+					'list' => [
+						'name' => 'List',
+						'selected' => true,
+					],
 					'add' => [
 						'name' => 'Add',
 						'selected' => false,
@@ -207,10 +231,6 @@
 					'delete' => [
 						'name' => 'Delete',
 						'selected' => false,
-					],
-					'list' => [
-						'name' => 'List',
-						'selected' => true,
 					],
 				]
 			],
@@ -246,22 +266,34 @@
 			10 => [
 				'name' => 'All Invoices',
 				'action' => [
-					'edit' => [
-						'name' => 'Edit',
-						'selected' => false,
-					],
-					'download' => [
-						'name' => 'Download Documents',
-						'selected' => false,
-					],
-					'delete' => [
-						'name' => 'Delete',
-						'selected' => false,
-					],
 					'list' =>[
 						'name' => 'List',
 						'selected' => true,
 					],
+					// 'edit' => [
+					// 	'name' => 'Edit',
+					// 	'selected' => false,
+					// ],
+					'view' => [
+						'name' => 'View Invoices',
+						'selected' => false,
+					],
+					'assign-investor' => [
+						'name' => 'Assign Investor',
+						'selected' => false,
+					],
+					'download' => [
+						'name' => 'Download Invoices',
+						'selected' => false,
+					],
+					'view-document' => [
+						'name' => 'View Document',
+						'selected' => false,
+					],
+					// 'delete' => [
+					// 	'name' => 'Delete',
+					// 	'selected' => false,
+					// ],
 				]
 			],
 			11 => [
@@ -299,6 +331,52 @@
 					],
 					'list' =>[
 						'name' => 'List',
+						'selected' => false,
+					],
+				]
+			],
+			14 => [
+				'name' => 'Invitation',
+				'action' => [
+					'list' => [
+						'name' => 'List',
+						'selected' => true,
+					],
+					'send' => [
+						'name' => 'Send',
+						'selected' => false,
+					],
+					'create-mater-link' => [
+						'name' => 'Create Master link',
+						'selected' => false,
+					],
+					'master_register' => [
+						'name' => 'Register By Master Link',
+						'selected' => false,
+					],
+				]
+			],
+			16 => [
+				'name' => 'So Module',
+				'action' => [
+					'list' => [
+						'name' => 'List',
+						'selected' => true,
+					],
+					'view' => [
+						'name' => 'View PO',
+						'selected' => false,
+					],
+					'assign-project' => [
+						'name' => 'Assign Project',
+						'selected' => false,
+					],
+					'download' => [
+						'name' => 'Download PO',
+						'selected' => false,
+					],
+					'view-document' => [
+						'name' => 'View Document',
 						'selected' => false,
 					],
 				]

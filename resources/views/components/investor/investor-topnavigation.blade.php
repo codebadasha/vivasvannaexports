@@ -38,7 +38,15 @@
                     <i class="mdi mdi-chevron-down d-none d-xl-inline-block"></i>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end">
-                    <!-- item-->
+                    <a class="dropdown-item" href="{{ route('investor.editProfile') }}">
+                        <i class="bx bx-user font-size-16 align-middle me-1"></i> 
+                        <span key="t-profile">Profile</span>
+                    </a>
+
+                    <a class="dropdown-item" href="{{ route('investor.changeinvestorPassword') }}">
+                        <i class="bx bx-key font-size-16 align-middle me-1"></i> 
+                        <span key="t-my-key">Change Password</span>
+                    </a>
                     <a class="dropdown-item text-danger" href="{{ route('investor.logout') }}">
                         <i class="bx bx-power-off font-size-16 align-middle me-1 text-danger"></i> 
                         <span key="t-logout">Logout</span>

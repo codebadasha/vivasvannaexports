@@ -25,7 +25,7 @@ class RoleController extends Controller
     **/
     public function roleList(){
 
-        $roles = Role::where('is_delete',0)->get();
+        $roles = Role::select(['id','name'])->whereNot('name', 'Super Admin')->where('is_delete',0)->get();
 
         return view('admin.role.role_list', compact('roles'));
     }

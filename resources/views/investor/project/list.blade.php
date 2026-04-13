@@ -11,7 +11,14 @@
 
                     <div class="page-title-right">
                         <ol class="breadcrumb m-0">
-                            <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Main Dashboard</a></li>
+                            @if(request()->has('from_client') && request()->from_client == 1 && isset($client))
+                                <li class="breadcrumb-item">
+                                    <a href="{{ route('admin.client.clientDashboard', base64_encode($client->id)) }}">
+                                        {{ $client->company_name }} Dashboard
+                                    </a>
+                                </li>
+                            @endif
                             <li class="breadcrumb-item active">All Projects</li>
                         </ol>
                     </div>
@@ -24,9 +31,22 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-body">
-                        <form action="{{ route('admin.project.index') }}">
+                        <form action="{{ route('investor.project.index') }}">
                             <div class="row">  
 
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-group">
+                                        <label>Client</label>
+                                        <select class="form-control select2" name="client">
+                                            <option value="">Select Client</option>
+                                            @forelse($clients as $sk => $sv)
+                                                <option value="{{ $sv->id }}" {{ $sv->id == request()->client ? 'selected' : ''}}>{{ $sv->company_name }}</option>
+                                            @empty
+                                                <option value="">No Data Found</option>
+                                            @endforelse
+                                        </select>
+                                    </div>
+                                </div>
                                 <div class="col-md-4 mb-3">
                                     <div class="form-group">
                                         <label>Daterange</label>
@@ -39,24 +59,10 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-4 mb-3">
-                                    <div class="form-group">
-                                        <label>Client</label>
-                                        <select class="form-control select2" name="client">
-                                            <option value="">Select Client</option>
-                                            @forelse(\App\Models\ClientCompany::where('is_active',1)->where('is_delete',0)->get() as $sk => $sv)
-                                                <option value="{{ $sv->id }}" {{ $sv->id == request()->client ? 'selected' : ''}}>{{ $sv->company_name }}</option>
-                                            @empty
-                                                <option value="">No Data Found</option>
-                                            @endforelse
-                                        </select>
-                                    </div>
-                                </div>
-
                                 <div class="col-md-2 mt-4">
                                     <button type="submit" class="btn btn-primary vendors save_button mt-1">Submit</button>
                                     @if($filter == 1)
-                                        <a href="{{ route('admin.project.index') }}" class="btn btn-danger mt-1 cancel_button" id="filter" name="save_and_list" value="save_and_list">
+                                        <a href="{{ route('investor.project.index') }}" class="btn btn-danger mt-1 cancel_button" id="filter" name="save_and_list" value="save_and_list">
                                             Reset
                                         </a>
                                     @endif

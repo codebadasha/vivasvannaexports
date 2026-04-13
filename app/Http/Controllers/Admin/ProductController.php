@@ -15,7 +15,7 @@ class ProductController extends GlobalController
 
     public function index(){
 
-        $product = Product::with(['taxDetails'])->where('is_delete',0)->get();
+        $product = Product::with(['taxDetails'])->where('is_delete',0)->orderByDesc('id')->get();
         return view('admin.product.list',compact('product'));
         
     }

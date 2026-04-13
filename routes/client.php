@@ -11,9 +11,9 @@
 
 
 	//forget and reset password
-	Route::get('password/reset', 'Auth\ForgotPasswordController@showLinkRequestForm')->name('client.auth.password.reset');
+	Route::get('password/forgot', 'Auth\ForgotPasswordController@showLinkRequestForm')->name('client.auth.password.reset');
+	Route::get('password/reset/{token?}', 'Auth\ResetPasswordController@showResetForm')->name('password.reset');
 	Route::post('password/email', 'Auth\ForgotPasswordController@sendResetLinkEmail')->name('client.passwordemail');
-	Route::get('password/reset/{token?}', 'Auth\ResetPasswordController@showResetForm')->name('client.auth.password.reset');
 	Route::post('password/reset', 'Auth\ResetPasswordController@reset')->name('client.resetpassword');
 
 
@@ -43,21 +43,21 @@
 		Route::get('/delete/{id}', 'ProjectController@delete')->name('client.project.delete');
 	});
 
-	Route::group(['prefix' => 'boq'], function () {
-		Route::get('/list', 'BoqController@index')->name('client.boq.index');
-		Route::get('/create', 'BoqController@create')->name('client.boq.create');
-		Route::post('/store', 'BoqController@store')->name('client.boq.store');
-		Route::get('/edit/{id}', 'BoqController@edit')->name('client.boq.edit');
-		Route::post('/update', 'BoqController@update')->name('client.boq.update');
-		Route::get('/delete/{id}', 'BoqController@delete')->name('client.boq.delete');
+	// Route::group(['prefix' => 'boq'], function () {
+	// 	Route::get('/list', 'BoqController@index')->name('client.boq.index');
+	// 	Route::get('/create', 'BoqController@create')->name('client.boq.create');
+	// 	Route::post('/store', 'BoqController@store')->name('client.boq.store');
+	// 	Route::get('/edit/{id}', 'BoqController@edit')->name('client.boq.edit');
+	// 	Route::post('/update', 'BoqController@update')->name('client.boq.update');
+	// 	Route::get('/delete/{id}', 'BoqController@delete')->name('client.boq.delete');
 
-		Route::post('/get-new-item', 'BoqController@getNewItem')->name('client.boq.getNewItem');
-		Route::post('/get-product-variation', 'BoqController@getProductVariation')->name('client.boq.getProductVariation');
-		Route::post('/get-unit', 'BoqController@getUnit')->name('client.boq.getUnit');
-		Route::post('/view-boq', 'BoqController@viewBoq')->name('client.boq.viewBoq');
-		Route::post('/boq-name', 'BoqController@boqName')->name('client.boq.boqName');
-		Route::post('/get-client-project', 'BoqController@getClientProject')->name('client.boq.getClientProject');
-	});
+	// 	Route::post('/get-new-item', 'BoqController@getNewItem')->name('client.boq.getNewItem');
+	// 	Route::post('/get-product-variation', 'BoqController@getProductVariation')->name('client.boq.getProductVariation');
+	// 	Route::post('/get-unit', 'BoqController@getUnit')->name('client.boq.getUnit');
+	// 	Route::post('/view-boq', 'BoqController@viewBoq')->name('client.boq.viewBoq');
+	// 	Route::post('/boq-name', 'BoqController@boqName')->name('client.boq.boqName');
+	// 	Route::post('/get-client-project', 'BoqController@getClientProject')->name('client.boq.getClientProject');
+	// });
 
 	Route::group(['prefix' => 'po'], function () {
 		Route::get('/list', 'PurchaseOrderController@index')->name('client.po.index');
@@ -81,9 +81,12 @@
 		Route::post('/get-project', 'PurchaseOrderController@getProject')->name('client.po.getProject');
 		Route::post('/get-boq', 'PurchaseOrderController@getBoq')->name('client.po.getBoq');
 		Route::post('/get-boq-item', 'PurchaseOrderController@getBoqItem')->name('client.po.getBoqItem');
+
+		Route::post('/open-document', 'PurchaseOrderController@openDocument')->name('client.po.openDocument');
 	});
 
-	Route::group(['prefix' => 'invoice'], function () {
+Route::group(['prefix' => 'invoice'], function () {
+		Route::get('/download-zip/{id}', 'PurchaseOrderController@downloadInvoiceZip')->name('client.so.invoicezip');
 		Route::get('/list/{po_id}', 'PurchaseOrderController@invoiceList')->name('client.po.invoiceList');
 		Route::get('/create/{po_id}', 'PurchaseOrderController@addInvoice')->name('client.po.addInvoice');
 		Route::post('/store', 'PurchaseOrderController@saveInvoice')->name('client.po.saveInvoice');
@@ -91,15 +94,22 @@
 		Route::post('/update', 'PurchaseOrderController@saveEditedInvoice')->name('client.po.saveEditedInvoice');
 		Route::get('/delete/{id}', 'PurchaseOrderController@deleteInvoice')->name('client.po.deleteInvoice');
 		Route::get('/download-invoice-document-zip/{id}', 'PurchaseOrderController@downloadInvoiceDocumentZip')->name('client.po.downloadInvoiceDocumentZip');
-		Route::get('/all', 'PurchaseOrderController@allInvoice')->name('client.invoice.index');
-	});
+		Route::get('/list', 'PurchaseOrderController@allInvoice')->name('client.invoice.index');
+	Route::get('/ewaybill/{id}', 'PurchaseOrderController@viewEwayBill')->name('client.invoice.ewaybill');
+		});
 
 	Route::group(['prefix' => 'transaction'], function () {
 		Route::get('/list', 'TransactionController@index')->name('client.transaction.index');
 	});
 
 	Route::group(['prefix' => 'credit'], function () {
-		Route::get('/apply', 'CreditController@add')->name('client.credit.add');
-		Route::post('/store', 'CreditController@store')->name('client.credit.store');
-		Route::post('/get-statement', 'CreditController@getStatement')->name('client.credit.getStatement');
+		Route::get('/list','CreditController@list')->name('client.credit.list');
+		Route::get('/apply', 'CreditController@showApplyForm')->name('client.credit.apply');
+		Route::post('/bank/init',   'CreditController@initBank')->name('client.credit.bank.init');
+		Route::post('/bank/upload', 'CreditController@uploadBankStatement')->name('client.credit.bank.upload');
+		Route::post('/gst/init-otp',   'CreditController@initGstOtp')->name('client.credit.gst.init');
+		Route::post('/gst/submit-otp', 'CreditController@submitGstOtp')->name('client.credit.gst.submit');
+		Route::post('/balance/upload', 'CreditController@uploadBalanceSheets')->name('client.credit.balance.upload');
 	});
+
+

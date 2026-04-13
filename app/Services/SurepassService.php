@@ -170,6 +170,7 @@ class SurepassService
                     $panCheck['message'] ?? 'PAN validation failed'
                 ), 400);
             }
+            
             $business_name = $gstData['business_name'];
             $panData = $panCheck['data'];
             $panData['promoters'] = $gstData['promoters'];
@@ -358,7 +359,7 @@ class SurepassService
     /**
      * Find company in list by normalized name
      */
-    protected function findCompany(array $company_list, string $searchName): ?string
+    public function findCompany(array $company_list, string $searchName): ?string
     {
         $normalizedSearch = $this->normalizeCompanyName($searchName);
 

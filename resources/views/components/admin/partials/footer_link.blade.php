@@ -9,6 +9,9 @@
     <script src="{{ asset('libs/apexcharts/apexcharts.min.js') }}"></script>
     <script src="{{ asset('js/pages/dashboard.init.js') }}"></script>
 @endif
+@if(Route::is('admin.so.index') || Route::is('admin.so.allinvoice.index') || Route::is('admin.so.viewso'))
+    <script src="{{ asset('js/document-preview.js') }}"></script>
+@endif
 
 <!-- Dropify js -->
 <script src="{{ asset('libs/dropify/dist/js/dropify.js') }}"></script>
@@ -69,9 +72,6 @@
 	$('.dropify').dropify();
 	$('.select2').select2();
 	// $("#description").maxlength({ warningClass: "badge bg-info", limitReachedClass: "badge bg-warning" });
-    $("#password").passwordRequirements({
-        numcharacters:8
-    });
 </script>
 
 <!-- Occasion js -->

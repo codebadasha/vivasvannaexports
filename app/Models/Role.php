@@ -7,7 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Role extends Model
 {
-    use HasFactory;
+     use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'zoho_role_id',
+    ];
 
     public function module(){
         return $this->hasMany('App\Models\RoleModule','role_id','id');

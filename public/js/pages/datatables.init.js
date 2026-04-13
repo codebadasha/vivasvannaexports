@@ -8,6 +8,7 @@ $(document).ready(function(){
 		lengthChange:!1,
 		"scrollX": true,
         "searching": true,
+        "ordering": false,
 		buttons:[
             { extend: 'excel',className: 'btn btn-primary' }
         ],

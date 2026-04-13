@@ -11,8 +11,17 @@ class ClientCompanyContact extends Model
 
     protected $fillable = [
         'client_company_id',
+        'contact_person_id',
         'name',
         'email',
         'mobile',
+        'phone',
+        'is_primary',
+        'designation',
     ];
+
+    public function clientCompany()
+    {
+        return $this->belongsTo(ClientCompany::class, 'client_company_id');
+    }
 }

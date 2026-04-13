@@ -35,8 +35,11 @@ class ProjectController extends Controller
 
     public function store(Request $request){
 
+        $user = Auth::guard('client')->user();
+
         $project = new Project;
-        $project->client_id = $request->client_id;
+        $project->client_id = $user->id;
+        $project->zoho_client_id = $user->zoho_contact_id;
         $project->name = $request->name;
         $project->description = $request->description;
         $project->save();
@@ -62,7 +65,8 @@ class ProjectController extends Controller
     public function update(Request $request){
 
         $project = Project::findOrFail($request->id);
-        $project->client_id = $request->client_id;
+        $project->client_id = $user->id;
+        $project->zoho_client_id = $user->zoho_contact_id;
         $project->name = $request->name;
         $project->description = $request->description;
         $project->save();

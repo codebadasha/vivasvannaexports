@@ -39,6 +39,11 @@ class SalesOrderInvoiceItem extends Model
         return $this->hasMany(SalesOrderInvoiceItemTax::class, 'item_id');
     }
 
+    public function invoice()
+    {
+        return $this->belongsTo(SalesOrderInvoice::class, 'invoice_id');
+    }
+
     public static function upsertFromZoho(array $data, $invoiceId)
     {
        $item = self::updateOrCreate(
@@ -72,7 +77,7 @@ class SalesOrderInvoiceItem extends Model
         // Taxes
         if (!empty($data['line_item_taxes'])) {
             foreach ($data['line_item_taxes'] as $tax) {
-                SalesOrderInvoiceItemTax::upsertFromZoho($tax, $data['item_id'], $invoiceId);
+                SalesOrderInvoiceItemTax::upsertFromZoho($tax, $item->id, $invoiceId);
             }
         }
         return $item;

@@ -5,18 +5,21 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\Notifications\ClientResetPasswordNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Services\ZohoBookService;
 
 class ClientCompany extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    protected $hidden = ['password'];
+    protected $hidden = ['password','remember_token'];
 
     protected $fillable = [
         'uuid',
+        'admin_id',
         'zoho_contact_id',
         'company_name',
         'address',
@@ -43,6 +46,12 @@ class ClientCompany extends Authenticatable
         'updated_at',
     ];
 
+    public function sendPasswordResetNotification($token)
+    {
+        $notification = new ClientResetPasswordNotification($token);
+        $notification->sendCustomMail($this);
+    }
+
     public function authorized()
     {
         return $this->hasMany(ClientCompanyAuthorizedPerson::class, 'client_company_id', 'id');
@@ -50,7 +59,7 @@ class ClientCompany extends Authenticatable
 
     public function contact()
     {
-        return $this->hasMany(ClientCompanyContact::class, 'client_company_id', 'id');
+        return $this->hasMany(ClientCompanyContact::class);
     }
 
     public function investor()
@@ -60,7 +69,7 @@ class ClientCompany extends Authenticatable
 
     public function gstDetails()
     {
-        return $this->hasOne(ClientGstDetail::class, 'client_company_id');
+        return $this->hasOne(ClientGstDetail::class);
     }
 
     public function getPromoters()
@@ -68,7 +77,16 @@ class ClientCompany extends Authenticatable
         return $this->hasOne(ClientGstDetail::class, 'client_company_id')
             ->select('client_company_id', 'promoters');
     }
-
+    
+    public function investors()
+    {
+        return $this->belongsToMany(
+            Investor::class,
+            'investor_clients',
+            'client_company_id',
+            'investor_id'
+        );
+    }
     /**
      * Upsert full customer (company, addresses, authorized person, GST, team member) from Zoho payload.
      */
@@ -76,21 +94,31 @@ class ClientCompany extends Authenticatable
     {
         return DB::transaction(function () use ($customerDetails, $surepassData, $msmeRegister) {
 
-            $uuid = (string) Str::uuid();
-
-            $email = $customerDetails['email'] ?? $surepassData['email'] ?? null;
-            $mobile = $customerDetails['phone'] ?? $customerDetails['mobile'] ?? $surepassData['mobile_number'] ?? null;
-            $panNumber = strtoupper($surepassData['pan_number'] ?? null);
             $gstn = strtoupper($surepassData['gstn'] ?? null);
+
+            $company = self::where('gstn', $gstn)
+                ->orWhere('zoho_contact_id', $customerDetails['contact_id'] ?? null)
+                ->first();
+
+            $companyGst = \App\Models\ClientGstDetail::where('gstn', $gstn)->first();
+            $constitution = $companyGst?->constitution_of_business ?? '';
+
+            $uuid = (string) Str::uuid();
+            $firstName = $customerData['first_name'] ?? '';
+            $lastName  = $customerData['last_name'] ?? '';
+            $name      = trim($firstName . ' ' . $lastName);
+            $email     = $customerData['email'] ?? null;
+            $normalizedMobile = $existingCompany->normalizeMobile($customerData['mobile'] ?? null);
+            $panNumber = strtoupper($surepassData['pan_number'] ?? null);
 
             $companyData = [
                 'uuid' => $uuid,
                 'zoho_contact_id' => $customerDetails['contact_id'] ?? null,
-                'company_name' => $surepassData['company_name'] ?? null,
+                'company_name' => $surepassData['company_name'] ??  null,
                 'address' => $surepassData['address'] ?? null,
                 'state_id' => $surepassData['state_id'] ?? null,
-                'director_name' => $surepassData['director_name'][0] ?? null,
-                'mobile_number' => $mobile,
+                'director_name' => $name,
+                'mobile_number' => $mobile ?? '',
                 'email' => $email,
                 'password' => bcrypt($gstn),
                 'gstn' => $gstn,
@@ -104,11 +132,6 @@ class ClientCompany extends Authenticatable
                 'is_active' => 1,
             ];
 
-            // ✅ Find existing company by GSTN or Zoho contact ID
-            $company = self::where('gstn', $gstn)
-                ->orWhere('zoho_contact_id', $customerDetails['contact_id'] ?? null)
-                ->first();
-
             if ($company) {
                 $company->update($companyData);
                 Log::info("Updated existing customer company", ['id' => $company->id, 'gstn' => $gstn]);
@@ -117,35 +140,38 @@ class ClientCompany extends Authenticatable
                 Log::info("Created new customer company", ['id' => $company->id, 'gstn' => $gstn]);
             }
 
-            // ✅ Assign default team member
-            $teamMember = \App\Models\Admin::where('is_default', 1)
-                ->orWhere('role_id', 4)
-                ->first();
+            // Prepare contact data
+            $contactData = [
+                'company'           => $company,
+                'zoho_contacts'     => $customerDetails['contact_persons'] ?? [],
+                'surepass_contacts' => [],
+                'zoho_contact_id'   => $customerDetails['contact_id'] ?? null,   // Parent contact ID in Zoho
+            ];
 
-            if ($teamMember) {
-                $company->teamMembers()->updateOrCreate(
-                    ['admin_id' => $teamMember->id],
-                    ['client_company_id' => $company->id]
-                );
+            // Add Surepass Director as Contact Person for Proprietorship & Partnership
+            if (in_array($constitution, ['Proprietorship', 'Partnership']) && !empty($surepassData['mobile_number'])) {
+                $normalizedMobile = $company->normalizeMobile($surepassData['mobile_number']);
+
+                if (!empty($normalizedMobile)) {
+                    $contactData['surepass_contacts'][] = [
+                        'contact_person_id' => null,
+                        'name'              => $surepassData['director_name'][0] ?? null,
+                        'email'             => $email,
+                        'mobile'            => $normalizedMobile,
+                        'phone'             => null,
+                        'designation'       => null,
+                        'is_primary'        => false,
+                    ];
+                }
             }
-
-            // ✅ Link GST details
-            $companyGst = \App\Models\ClientGstDetail::where('gstn', $gstn)->first();
-            if ($companyGst) {
-                $companyGst->update(['client_company_id' => $company->id]);
+            
+            if ((!empty($contactData['zoho_contacts']) && is_array($contactData['zoho_contacts'])) ||
+            (!empty($contactData['surepass_contacts']) && is_array($contactData['surepass_contacts']))) 
+            {
+                Log::info("start new customer company contacts create type", ['id' => $company->id, 'gstn' => $gstn, 'type' => $constitution]);
+                self::contactPersonsUpsert($contactData);                
             }
-
-            // ✅ Sync authorized person
-            if (!empty($surepassData['director_name'][0])) {
-                $company->authorized()->delete();
-                $company->authorized()->create([
-                    'name' => $surepassData['director_name'][0],
-                    'email' => $email,
-                    'mobile' => $mobile,
-                ]);
-            }
-
-            // ✅ Sync addresses
+            
             foreach (['billing_address', 'shipping_address'] as $type) {
                 if (empty($customerDetails[$type])) {
                     continue;
@@ -173,10 +199,176 @@ class ClientCompany extends Authenticatable
                     $company->addresses()->create(array_merge(['type' => $addressType], $addressData));
                 }
             }
-
+            
             return $company;
         });
     }
+
+    public static function contactPersonsUpsert(array $contactData): void
+    {
+        $company          = $contactData['company'];
+        $zohoContacts     = $contactData['zoho_contacts'];
+        $surepassContacts = $contactData['surepass_contacts'];
+        $zohoContactId    = $contactData['zoho_contact_id'];
+        $processedMobiles = [];
+
+        if (!empty($zohoContacts) && is_array($zohoContacts)) {
+            foreach ($zohoContacts as $person) {
+                $firstName = $person['first_name'] ?? '';
+                $lastName  = $person['last_name'] ?? '';
+                $name      = trim($firstName . ' ' . $lastName);
+
+                $email         = $person['email'] ?? null;
+                $mobileRaw     = $person['mobile'] ?? null;
+                $phoneRaw      = $person['phone'] ?? null;
+                $designation   = $person['designation'] ?? null;
+                $isPrimaryZoho = $person['is_primary_contact'] ?? false;
+                $contactPersonId = $person['contact_person_id'] ?? null;   // if Zoho sends this
+
+                $normalizedMobile = $company->normalizeMobile($mobileRaw);
+                $normalizedPhone  = $company->normalizeMobile($phoneRaw);
+
+                if (empty($normalizedMobile) && empty($normalizedPhone)) {
+                    continue;
+                }
+
+                $isPrimary = $isPrimaryZoho ? 1 : 0;
+
+                $data = [
+                    'contact_person_id' => $contactPersonId,
+                    'name'              => !empty($name) ? $name : null,
+                    'email'             => !empty($email) ? $email : null,
+                    'mobile'            => !empty($normalizedMobile) ? $normalizedMobile : null,
+                    'phone'             => !empty($normalizedPhone) ? $normalizedPhone : null,
+                    'designation'       => !empty($designation) ? $designation : null,
+                    'is_primary'        => $isPrimary,
+                ];
+
+                Log::info("new customer company contacts details from zoho contacts", ['gst' => $company->gstn, 'data' => $data]);
+
+                $company->contact()->updateOrCreate(
+                    ['contact_person_id' => $contactPersonId],
+                    $data
+                );
+
+                if(!empty($normalizedMobile) && !in_array($normalizedMobile, $processedMobiles)){
+                    $processedMobiles[] = $normalizedMobile;
+                }     
+
+                if(!empty($normalizedPhone) && !in_array($normalizedPhone, $processedMobiles)){
+                    $processedMobiles[] = $normalizedPhone;
+                }     
+            }
+        }
+        Log::info("start new customer company total contacts after zoho contacts", ['total' => $processedMobiles]);
+
+        if (!empty($surepassContacts) && is_array($surepassContacts)) {
+            foreach ($surepassContacts as $contact) {
+                if (in_array($contact['mobile'], $processedMobiles)) {
+                    continue; // Already added from Zoho
+                }
+                
+                if ($zohoContactId) 
+                {
+                    $zohoService = new ZohoBookService();
+                    $zohoPayload = [
+                        'contact_id'        => $zohoContactId,
+                        'first_name'        => $contact['name'],
+                        'email'             => $contact['email'],
+                        'mobile'            => $contact['mobile']
+                    ];
+
+                    try {
+                        $zohoResponse = $zohoService->CreateCustomerContact($zohoPayload);
+                        $contact['contact_person_id'] = $zohoResponse['contact_person']['contact_person_id'] ?? null;
+
+                        Log::info('Zoho Contact Person Created', [
+                            'company_id' => $company->id,
+                            'zoho_contact_person_id' => $contact['contact_person_id']
+                        ]);
+
+                    } catch (\Exception $e) {
+                        Log::error('Failed to create contact person in Zoho', [
+                            'company_id' => $company->id,
+                            'error' => $e->getMessage()
+                        ]);
+                        // Still save locally even if Zoho fails
+                    }
+                }
+
+                $localPayload = [
+                    'contact_person_id' => $contact['contact_person_id'],
+                    'name'              => $contact['name'] ?? null,
+                    'email'             => $contact['email'] ?? null,
+                    'mobile'            => $contact['mobile'],
+                    'phone'             => $contact['phone'] ?? null,
+                    'is_primary'        => $contact['is_primary'] ?? 1,
+                ];
+
+                Log::info("new customer company contacts details from zoho contacts", ['gst' => $company->gstn, 'data' => $localPayload]);
+
+                $company->contact()->updateOrCreate(
+                    ['mobile' => $contact['mobile']],     // Use mobile as the unique matching key
+                    $localPayload
+                );
+
+                $processedMobiles[] = $contact['mobile'];
+
+            }
+        }
+
+        Log::info("start new customer company total contacts after sure pass contacts", ['total' => $processedMobiles]);
+    }
+
+    public function normalizeMobile($mobile)
+    {
+        if (empty($mobile)) {
+            return null;
+        }
+
+        $mobile = trim((string)$mobile);
+
+        // === Your requested logic: Check for '-' and explode ===
+        if (strpos($mobile, '-') !== false) {
+            $parts = explode('-', $mobile);
+            $mobile = end($parts);        // Take the last part after last '-'
+        }
+
+        // Now clean the number (remove all non-digits)
+        $mobile = preg_replace('/\D+/', '', $mobile);
+
+        // Remove leading '0' or '91' if number is longer than 10 digits
+        if (strlen($mobile) > 10) {
+            if (str_starts_with($mobile, '91')) {
+                $mobile = substr($mobile, 2);
+            } elseif (str_starts_with($mobile, '0')) {
+                $mobile = substr($mobile, 1);
+            }
+        }
+
+        // Return only last 10 digits
+        return substr($mobile, -10) ?: null;
+    }
+
+    // private function addOrUpdateAuthorized($company, $name, $email, $normalizedMobile)
+    // {
+    //     $existing = $company->authorized()->where('mobile', $normalizedMobile)->first();
+
+    //     if ($existing) {
+    //         $existing->update([
+    //             'name'  => $name,
+    //             'email' => $email,
+    //             'mobile'=> $normalizedMobile,
+    //         ]);
+    //     } else {
+
+    //         $company->authorized()->create([
+    //             'name'  => $name,
+    //             'email' => $email,
+    //             'mobile'=> $normalizedMobile,
+    //         ]);
+    //     }
+    // }
 
     public function addresses()
     {

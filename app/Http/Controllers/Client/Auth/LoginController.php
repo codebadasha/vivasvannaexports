@@ -63,7 +63,7 @@ class LoginController extends Controller
         ]);
 
         try {
-            $gstn = $request->gstn;
+            $gstn = strtoupper(trim($request->gstn));
             $password = $request->password;
 
             // ✅ Check user by GSTN
@@ -72,18 +72,27 @@ class LoginController extends Controller
             if (!$user) {
                 Log::warning("Login failed: GSTN not found", ['gstn' => $gstn]);
                 return back()->withErrors([
-                    'username' => 'This GST number is not registered in our records.'
+                    'gstn' => 'This GST number is not registered in our records.'
                 ]);
             }
 
             // ✅ Verify password
-            if (!Hash::check($password, $user->password)) {
-                Log::warning("Login failed: Invalid password", ['gstn' => $gstn]);
-                return back()->withErrors([
-                    'password' => 'Invalid credentials. Please try again.'
-                ]);
+            if($user->is_auto_password == 1){
+                if($password != $user->uuid){
+                    Log::warning("Login failed: Invalid password", ['gstn' => $gstn]);
+                    return back()->withErrors([
+                        'password' => 'Invalid credentials. Please try again.'
+                    ]);
+                }
+            }else{
+                if (!Hash::check($password, $user->password)) {
+                    Log::warning("Login failed: Invalid password", ['gstn' => $gstn]);
+                    return back()->withErrors([
+                        'password' => 'Invalid credentials. Please try again.'
+                    ]);
+                }
             }
-
+            
             // ✅ Login
             Auth::guard('client')->login($user);
 

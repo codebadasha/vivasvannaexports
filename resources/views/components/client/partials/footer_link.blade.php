@@ -6,8 +6,10 @@
 <script src="{{ asset('libs/simplebar/simplebar.min.js') }}"></script>
 <script src="{{ asset('libs/node-waves/waves.min.js') }}"></script>
 <script src="{{ asset('libs/apexcharts/apexcharts.min.js') }}"></script>
-<script src="{{ asset('js/pages/dashboard.init.js') }}"></script>
-
+<!-- <script src="{{ asset('js/pages/dashboard.init.js') }}"></script> -->
+@if(Route::is('client.po.index') || Route::is('client.invoice.index') || Route::is('client.po.viewpo'))
+    <script src="{{ asset('js/document-preview.js') }}"></script>
+@endif
 <!-- Dropify js -->
 <script src="{{ asset('libs/dropify/dist/js/dropify.js') }}"></script>
 <script src="{{ asset('libs/dropify/dist/js/dropify.min.js') }}"></script>
@@ -36,6 +38,7 @@
 <script src="{{ asset('libs/bootstrap-datepicker/js/bootstrap-datepicker.min.js') }}"></script>
 
 <script src="{{ asset('js/jquery.validate.min.js') }}"></script>
+<script src="{{ asset('js/validation.js') }}"></script>
 @if(app()->getLocale() == "en")
 	<script src="{{ asset('js/merchant/message_en.js') }}"></script>
 @else
@@ -47,6 +50,7 @@
 @endif
 
 <script src="{{ asset('js/merchant/validation.js') }}"></script>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 <script src="{{ asset('templateEditor/ckeditor/ckeditor.js') }}"></script>
@@ -64,4 +68,5 @@
 <script src="{{ asset('js/module/faq.js') }}"></script>
 <script src="{{ asset('js/module/attribute.js') }}"></script>
 <script src="{{ asset('templateEditor/ckeditor/ckeditor.js') }}"></script>
+<script src="{{ asset('libs/sweetalert2/sweetalert2.all.min.js') }}"></script>
 

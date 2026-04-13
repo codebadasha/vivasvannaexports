@@ -16,8 +16,9 @@ use App\Services\SurepassService;
 use App\Services\ZohoBookService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use App\Helpers\MailHelper;
 
 class CompanyRegisterController extends Controller
 {
@@ -77,22 +78,23 @@ class CompanyRegisterController extends Controller
                 'turnover'       => 'required|integer',
                 'mobile_number'  => 'required|digits:10',
                 'email_id'       => 'required|email|max:255',
-                'password'       => 'required|string|min:8|confirmed',
                 'cin'            => 'nullable|string|max:21',
 
-                'authorized' => 'required|array|min:1',
-                'authorized.*.name' => 'required|string|max:255',
-                'authorized.*.email' => 'required|email|max:255',
-                'authorized.*.mobile' => 'required|digits:10',
+                                'contact' => 'required|array|min:1',
 
-                'contact' => 'required|array|min:1',
                 'contact.*.name' => 'required|string|max:255',
                 'contact.*.email' => 'required|email|max:255',
                 'contact.*.mobile' => 'required|digits:10',
+                'contact.*.phone' => 'nullable|digits:10',
+                'contact.*.designation' => 'nullable|string',
             ], [
-                'password.confirmed' => 'Password and confirm password must match.',
-                'authorized.required' => 'At least one authorized person is required.',
                 'contact.required' => 'At least one contact person is required.',
+            ], 
+            [
+                // ✅ Attribute rename (IMPORTANT 🔥)
+                'contact.*.email' => 'Email',
+                'contact.*.mobile' => 'Mobile number',
+                'contact.*.name' => 'Name',
             ]);
 
             $uniqueToken   = substr($request->token, 0, 36);   // always first 36 chars
@@ -108,17 +110,7 @@ class CompanyRegisterController extends Controller
             }
 
             $panNumber = strtoupper($request->pan_number);
-            // Step 3: Get GST by PAN
-            // $gstByPan = $this->surepass->getGstByPan($panNumber);
-            // if (!$gstByPan['status']) {
-            //     Log::error('GST by PAN retrieval failed', [
-            //         'pan' => $panNumber,
-            //         'error' => $gstByPan['message'] ?? 'Unknown error'
-            //     ]);
-            //     return response()->json(DefaultResponse::error(
-            //         $gstByPan['message'] ?? 'GST by PAN retrieval failed'
-            //     ), 400);
-            // }
+        
             $msmeCheck = $surepass->msmeVerification($panNumber);
             $msme_register = 0; // default = not MSME
             if ($msmeCheck['status']) {
@@ -142,7 +134,7 @@ class CompanyRegisterController extends Controller
                     'company_name' => $request->company_name,
                     'mobile_number' => $request->mobile_number,
                     'email' => $request->email_id,
-                    'password' => bcrypt($request->password),
+                    'password' => bcrypt($uuid),
                     'address' => $request->address,
                     'state_id' => $request->state_id,
                     'gstn' => $gstNumber,
@@ -150,8 +142,8 @@ class CompanyRegisterController extends Controller
                     'cin_verify' => $request->cin !== null ? 1 : 0,
                     'msme_register' => $msme_register,
                     'turnover' => $request->turnover,
-                    'is_verify' => 1,
-                    'is_active' => 1,
+                    'is_verify' => 0,
+                    'is_active' => 0,
                 ];
 
                 $company = ClientCompany::create($companyData);
@@ -165,45 +157,22 @@ class CompanyRegisterController extends Controller
                 if ($invitation->is_master == true) {
                     MasterLinkRegistration::Create(
                         [
+                            'client_company_id' => $company->id,
                             'invitation_id' => $invitation->id,
                             'gstn'=> $gstNumber
                         ]
                     );
                 } else {
+                    $company->admin_id = $invitation->created_by;
+                    $company->save();
+
                     $invitation->is_registered = true;
                     $invitation->status = 2;
                     $invitation->gstn = $gstNumber;
                     $invitation->save();
                 }
                 
-                if (!empty($request->authorized)) {
-                    foreach ($request->authorized as $person) {
-                        ClientCompanyContact::create([
-                            'client_company_id' => $company->id,
-                            'name'              => $person['name'],
-                            'email'             => $person['email'],
-                            'mobile'            => $person['mobile'],
-                        ]);
-                    }
-                }
-
-                if (!empty($request->contact)) {
-                    foreach ($request->contact as $person) {
-                        ClientCompanyContact::create([
-                            'client_company_id' => $company->id,
-                            'name'              => $person['name'],
-                            'email'             => $person['email'],
-                            'mobile'            => $person['mobile'],
-                        ]);
-                    }
-                }
-                $teamMember = Admin::select('id')->where('is_default', 1)->first() ?? Admin::select('id')->where('role_id', 4)->first();
-
-                $team = new CompanyTeamMember;
-                $team->client_company_id = $company->id;
-                $team->admin_id = $teamMember->id;
-                $team->save();
-
+        
                 $address = explode(', ', $request->address);
 
                 // Total parts
@@ -213,12 +182,15 @@ class CompanyRegisterController extends Controller
                 $billing_address = [
                     'address'     => $address[0] ?? '',
                     'street2'     => '',
-                    'city'        => $address[$count - 3] ?? '',
-                    'state'       => $address[$count - 2] ?? '',
+                    'city'        => $count >= 3 ? $address[$count - 3] : '',
+                    'state'       => $count >= 2 ? $address[$count - 2] : '',
                     'state_code'  => '',
-                    'zip'         => $address[$count - 1] ?? '',
+                    'zip'         => $count >= 1 ? $address[$count - 1] : '',
                     'country'     => 'India'
                 ];
+                    // 'city'        => $address[$count - 3] : '',
+                    // 'zip'         => $address[$count - 1] ?? '',
+                    // 'state'       => $address[$count - 2] ?? '',
 
                 // Handle street2 (middle elements)
                 if ($count > 4) {
@@ -239,19 +211,6 @@ class CompanyRegisterController extends Controller
                     'shipping_address'     => $billing_address
                 ];
 
-                foreach ($request->authorized as $auth) {
-                    $nameParts = explode(' ', $auth['name'], 2);
-                    $zohoPayload['contact_persons'][] = [
-                        'salutation'          => '',
-                        'first_name'          => $nameParts[0] ?? '',
-                        'last_name'           => $nameParts[1] ?? '',
-                        'email'               => $auth['email'],
-                        'phone'               => $auth['mobile'],
-                        'mobile'              => $auth['mobile'],
-                        // 'is_primary_contact'  => empty($zohoPayload['contact_persons']) ? true : false,
-                        'enable_portal'       => false
-                    ];
-                }
 
                 // Add Additional Contact Persons
                 foreach ($request->contact as $contact) {
@@ -268,18 +227,67 @@ class CompanyRegisterController extends Controller
                     ];
                 }
 
+                $nameParts = explode(' ', $request->director_name, 2);
+                $zohoPayload['contact_persons'][] = [
+                    'salutation'          => '',
+                    'first_name'          => $nameParts[0] ?? '',
+                    'last_name'           => $nameParts[1] ?? '',
+                    'email'               => $request->email,
+                    'mobile'              => $request->mobile_number,
+                    'phone'               => '',
+                    'is_primary_contact'  => true,
+                    'enable_portal'       => false
+                ];
+
                 $response = $zoho->createCustomer($zohoPayload);
                 if (!isset($response['code']) || $response['code'] != 0) {
                     throw new \Exception('Zoho customer creation failed: ' . ($response['message'] ?? 'Unknown error'));
                 }
 
-                $zohoId = $response['contact']['contact_id'] ?? null;
-                $company->zoho_contact_id = $zohoId;
+                $contact = $response['contact'] ?? null;
+                $company->zoho_contact_id = $contact['contact_id'];
                 $company->save();
 
-                $perfiosResult = $perfios->searchGstByPan($panNumber);
+                foreach($contact['contact_persons'] as $person){
+                    $firstName = $person['first_name'] ?? '';
+                    $lastName  = $person['last_name'] ?? '';
+                    $name      = trim($firstName . ' ' . $lastName);
 
-                if (!$perfiosResult['success'] && !empty($perfiosResult['data']['result']) || is_array($perfiosResult['data']['result'])) {
+                    $email         = $person['email'] ?? null;
+                    $mobileRaw     = $person['mobile'] ?? null;
+                    $phoneRaw      = $person['phone'] ?? null;
+                    $designation   = $person['designation'] ?? null;
+                    $isPrimaryZoho = $person['is_primary_contact'] ?? false;
+                    $contactPersonId = $person['contact_person_id'] ?? null;   // if Zoho sends this
+
+                    $normalizedMobile = $company->normalizeMobile($mobileRaw);
+                    $normalizedPhone  = $company->normalizeMobile($phoneRaw);
+
+                    if (empty($normalizedMobile) && empty($normalizedPhone)) {
+                        continue;
+                    }
+
+                    $isPrimary = $isPrimaryZoho ? 1 : 0;
+
+                    $data = [
+                        'contact_person_id' => $contactPersonId,
+                        'name'              => !empty($name) ? $name : null,
+                        'email'             => !empty($email) ? $email : null,
+                        'mobile'            => !empty($normalizedMobile) ? $normalizedMobile : null,
+                        'phone'             => !empty($normalizedPhone) ? $normalizedPhone : null,
+                        'designation'       => !empty($designation) ? $designation : null,
+                        'is_primary'        => $isPrimary,
+                    ];
+
+                    Log::info("new customer company contacts details from zoho contacts", ['gst' => $company->gstn, 'data' => $data]);
+
+                    $company->contact()->updateOrCreate(
+                        ['contact_person_id' => $contactPersonId],
+                        $data
+                    );
+                }
+
+                if ($perfiosResult['success'] && !empty($perfiosResult['data']['result'])) {
                     $results   = $perfiosResult['data']['result'] ?? [];
                     foreach ($results as $item) {
                         $gstin = strtoupper($item['gstinId'] ?? '');
@@ -301,24 +309,41 @@ class CompanyRegisterController extends Controller
                     }
                 }
             });
+            try {
+            // ✅ Prepare mail data
+                $subject = 'Registration Successful – Awaiting Verification';
+                $viewFile = 'mail-template.client-registration-completed';
+                $response = MailHelper::send($request->email, $subject, $viewFile);
+
+                // ✅ Send mail
+                if (!$response['status']) {
+                    Log::error("Error Client Registration mail failed for {$request->email}: " . $response['message']);
+                }else{
+                    Log::info("Client Registration mail send successfully to - {$request->email} :-" . strtoupper($request->gstn));
+                }
+
+            } catch (\Throwable $loopEx) {
+                Log::error("Error processing Client Registration  for {$request->email}: " . $loopEx->getMessage(), [
+                    'trace' => $loopEx->getTraceAsString(),
+                ]);
+            }
             session([
                 'access_status' => true,
                 'status_type' => 'registered'
             ]);
             return redirect()->route('welcome');
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        }catch (\Illuminate\Validation\ValidationException $e) {
+
             Log::error('Validation failed for company registration', [
                 'errors' => $e->errors(),
                 'request' => $request->all()
             ]);
-
             return redirect()->back()
-                ->withInput()
-                ->with('messages', [
-                    ['type' => 'error', 'message' => 'Validation failed. Please check your inputs.']
-                ]);
-        } catch (\Exception $e) {
-            dd('yes');
+                ->withErrors($e->errors())
+                ->withInput();
+
+        }
+        catch (\Exception $e) {
             Log::error('Client company creation failed', [
                 'error' => $e->getMessage(),
                 'request_data' => $request->all()

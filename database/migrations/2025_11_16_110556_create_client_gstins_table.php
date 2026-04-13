@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('client_gstins', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('zoho_contact_id')->constrained('client_companies')->onDelete('cascade');
+            $table->foreignId('client_company_id')->constrained('client_companies')->onDelete('cascade');
             $table->string('gstin', 15);
             $table->string('pan_number', 10);
             $table->string('auth_status')->nullable();

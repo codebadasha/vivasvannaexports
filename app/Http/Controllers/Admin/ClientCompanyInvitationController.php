@@ -6,6 +6,7 @@ use App\Helpers\DefaultResponse;
 use App\Helpers\MailHelper;
 use App\Http\Controllers\Controller;
 use App\Models\ClientCompanyInvitation;
+use App\Models\MasterLinkRegistration;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -25,8 +26,14 @@ class ClientCompanyInvitationController extends Controller
     public function index()
     {
         try {
-            $invitations = ClientCompanyInvitation::where('is_master', false)->latest()->get();
+            $query = ClientCompanyInvitation::select('id','email','gstn','created_at','status','url')->where('is_master', false);
+            
+            $user = Auth::guard('admin')->user();
+            if(!in_array($user->user_role, ['Super Admin','admin'])){
+                $query->where('created_by', $user->id);
+            }
 
+            $invitations = $query->latest()->get();
             return view('admin.company-invitation.list', compact('invitations'));
         } catch (\Exception $e) {
             Log::error('Error fetching invitations: ' . $e->getMessage());
@@ -38,9 +45,14 @@ class ClientCompanyInvitationController extends Controller
     public function masterLink()
     {
         try {
-            $invitations = ClientCompanyInvitation::where('is_master', true)->latest()->get();
+            $invitations = MasterLinkRegistration::select('id','gstn','invitation_id','client_company_id')
+            ->with([
+                'client' => function($q){ $q->select('id','company_name','is_verify');},
+                'invitation' => function($q){$q->select('id','url');}
+                ])
+                ->latest()->get();
             $masterInvitation = ClientCompanyInvitation::where('is_master', true)
-                ->where('created_by', Auth::guard('admin')->id())
+                ->where('status', 1)
                 ->latest()
                 ->first();
 
@@ -106,10 +118,6 @@ class ClientCompanyInvitationController extends Controller
                     $viewFile = 'mail-template.client-invitation';
                     $data = [
                         'invitation_link' => $invitation->url,
-                        'signature_name'  => 'Vivasvanna Support Team',
-                        'signature_number' => '+91-9979955809',
-                        'support_emailId' => 'info@vivasvannaexports.com',
-                        'support_number'  => ['+919979955809', '+91-9979955809'],
                     ];
 
                     $response = MailHelper::send($email, $subject, $viewFile, $data);

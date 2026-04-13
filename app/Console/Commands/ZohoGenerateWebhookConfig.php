@@ -16,14 +16,16 @@ class ZohoGenerateWebhookConfig extends Command
     // -----------------------------------------------------------------
     private $modules = [
         'vendor'        => 'vendors',          // Zoho = vendors
+        'customers'     => 'customers',       // Zoho = customerss
         'tax'           => 'taxes',            // Zoho = taxes
         'taxgroup'      => 'taxgroups',        // Zoho = taxgroups
-        'salesorder'    => 'salesorders',      // Zoho = salesorders
-        'purchaseorder' => 'purchaseorders',   // Zoho = purchaseorders
         'product'       => 'items',            // Zoho = items
+        'salesorder'    => 'salesorders',      // Zoho = salesorders
+        'invoices'       => 'invoices',        // Zoho = invoices
+        'purchaseorder' => 'purchaseorders',   // Zoho = purchaseorders
     ];
 
-    private $events = ['create', 'update', 'delete'];
+    private $events = ['upsert', 'delete'];
 
     public function handle()
     {

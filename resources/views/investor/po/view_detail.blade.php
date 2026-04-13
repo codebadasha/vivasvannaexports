@@ -48,21 +48,72 @@
                                     <td>{{ \Carbon\Carbon::parse($ov->due_date)->format('d/m/Y') }}</td>
                                     <td>₹ {{ number_format($ov->total, 2, '.', ',') }}</td>
                                     <td>₹ {{ number_format($ov->balance, 2, '.', ',') }}</td>
-                                    <td>{{ $ov->ewaybill->ewaybill_id ?? '---' }}</td>
                                     <td>
+                                        @if($ov->ewayBills && $ov->investor_id == $investorId)
+                                            <a href="javascript:void(0);" class="viewEwayBill" data-token="{{ csrf_token() }}" data-url="{{ route('investor.invoice.ewaybill',base64_encode($ov->ewayBills->ewaybill_id)) }}">{{ $ov->ewayBills?->ewaybill_number }}</a>
+                                        @else
+                                            ---
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($ov->investor_id == $investorId)
                                         <a href="javascript:void(0);"
                                             class="btn btn-primary waves-effect waves-light viewInvoiceBtn"
                                             data-id="{{ base64_encode($ov->invoice_id) }}"
                                             role="button" title="View">
                                             <i class="fa fa-eye"></i>
                                         </a>
-                                        <a href="javascript:void(0);"
-                                            class="btn btn-danger waves-effect waves-light downloadInvoiceBtn"
-                                            data-id="{{ base64_encode($ov->invoice_id) }}"
-                                            role="button" title="Download PDF">
-                                            <i class="fa fa-download"></i>
-                                        </a>
-                                        
+                                        <div class="btn-group">
+                                            <button type="button" 
+                                                class="btn btn-danger dropdown-toggle waves-effect waves-light"
+                                                data-bs-toggle="dropdown" 
+                                                aria-expanded="false"
+                                                title="Download">
+                                                <i class="fa fa-download"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <a class="dropdown-item downloadInvoiceBtn"
+                                                    href="javascript:void(0);"
+                                                    data-id="{{ base64_encode($ov->invoice_id) }}">
+                                                        <i class="fa fa-file-pdf text-danger me-2"></i> Download Invoice PDF
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item downloadInvoiceZipBtn"
+                                                    href="javascript:void(0);"
+                                                    data-id="{{ base64_encode($ov->invoice_id) }}">
+                                                        <i class="fa fa-file-archive text-warning me-2"></i> Download All ZIP
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        @if(!empty($ov->documents) && count($ov->documents) > 0)
+                                            <div class="btn-group">
+                                                <button type="button" 
+                                                    class="btn btn-info dropdown-toggle waves-effect waves-light"
+                                                    data-bs-toggle="dropdown" 
+                                                    aria-expanded="false">
+                                                    <i class="fa fa-paperclip"></i>
+                                                </button>
+                                                <ul class="dropdown-menu" style="min-width: 250px;">
+                                                    @foreach($ov->documents as $index => $doc)
+                                                        <li>
+                                                            <a class="dropdown-item openDocument"
+                                                            href="javascript:void(0);"
+                                                            data-token="{{ csrf_token() }}"
+                                                            data-type="invoices"
+                                                            data-url="{{ route('investor.po.openDocument') }}"
+                                                            data-id="{{ $ov->invoice_id }}"
+                                                            data-document-id="{{ $doc['document_id'] }}">
+                                                                {{ $doc['file_name'] }}
+                                                            </a>
+                                                        </li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        @endif                                       
+                                        @endif                                       
                                     </td>
                                 </tr>
                                 @endforeach
@@ -95,6 +146,7 @@
         </div>
     </div>
 </div>
+@include('inc.documentModal')
 @endsection
 @section('js')
 

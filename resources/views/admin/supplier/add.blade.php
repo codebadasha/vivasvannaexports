@@ -22,8 +22,10 @@
                 <div class="col-lg-6 offset-lg-3">
                     <div class="card">
                         <div class="card-body">
-                            <div class="form-group">
-                                <span style="color:red;float:right;" class="pull-right">* is mandatory</span>
+                            <div class="form-group mb-3 d-flex justify-content-end">
+                                <small class="text-danger">
+                                    <span class="fw-bold">*</span> Indicates mandatory fields
+                                </small>
                             </div>
 
                             <div class="form-group mb-3">
